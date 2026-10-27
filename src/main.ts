@@ -286,6 +286,16 @@ class EsperanzaKonvaForgeApp {
   }
 
   private setupTopNav() {
+    // Electron Projects Folder Button
+    const electronApi = (window as any).electronAPI;
+    const btnOpenProjects = document.getElementById("btn-open-projects-folder");
+    if (electronApi && btnOpenProjects) {
+      btnOpenProjects.classList.remove("hidden");
+      btnOpenProjects.onclick = () => {
+        electronApi.openProjectsFolder();
+      };
+    }
+
     // Copyfit demo
     document.getElementById("btn-copyfit-demo")!.onclick = () => {
       const node = this.canvasManager.getSelected();
@@ -555,10 +565,16 @@ class EsperanzaKonvaForgeApp {
       const pngUrl = this.canvasManager.exportPNG();
       const a = document.createElement("a");
       a.href = pngUrl;
-      a.download = "esperanza-konva-forge-artwork.png";
+      a.download = `esperanza-konva-forge-${Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+
+      const electronApi = (window as any).electronAPI;
+      if (electronApi) {
+        const base64Data = pngUrl.replace(/^data:image\/\w+;base64,/, "");
+        electronApi.saveProjectFile(`forge-artwork-${Date.now()}.png`, base64Data, true);
+      }
     };
 
     document.getElementById("btn-download-json")!.onclick = () => {
@@ -567,11 +583,16 @@ class EsperanzaKonvaForgeApp {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "esperanza-konva-forge-document.json";
+      a.download = `esperanza-konva-forge-document-${Date.now()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      const electronApi = (window as any).electronAPI;
+      if (electronApi) {
+        electronApi.saveProjectFile(`forge-document-${Date.now()}.json`, json, false);
+      }
     };
 
     // Shortcuts Modal

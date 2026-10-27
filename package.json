@@ -5,10 +5,31 @@
   "author": "FlaskArchitect",
   "license": "MIT",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "NODE_ENV=development electron .",
+    "electron:build": "npm run build && electron-builder --linux AppImage"
+  },
+  "build": {
+    "appId": "com.flaskarchitect.esperanzakonvaforge",
+    "productName": "EsperanzaKonva Forge",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Graphics"
+    }
   },
   "dependencies": {
     "konva": "^10.9.0",
@@ -16,6 +37,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
   }
