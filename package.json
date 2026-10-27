@@ -15,7 +15,8 @@
   },
   "build": {
     "appId": "com.flaskarchitect.esperanzakonvaforge",
-    "productName": "EsperanzaKonva Forge",
+    "productName": "EsperanzaKonvaForge",
+    "artifactName": "${productName}-${version}.${ext}",
     "directories": {
       "output": "release"
     },
