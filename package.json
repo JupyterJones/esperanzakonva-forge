@@ -1,0 +1,22 @@
+{
+  "name": "esperanzakonva-forge",
+  "version": "1.0.0",
+  "description": "High-performance in-canvas rich text engine and graphic design suite by FlaskArchitect",
+  "author": "FlaskArchitect",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "konva": "^10.9.0",
+    "lucide": "^1.62.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

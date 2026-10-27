@@ -1,0 +1,68 @@
+{
+  "baseFontSize": 46,
+  "fill": {
+    "type": "gradient",
+    "color1": "#8B5CF6",
+    "color2": "#06B6D4",
+    "angle": 90
+  },
+  "shadow": {
+    "color": "rgba(6, 182, 212, 0.45)",
+    "blur": 18,
+    "offsetX": 0,
+    "offsetY": 4
+  },
+  "blocks": [
+    {
+      "id": "aurora-title",
+      "type": "paragraph",
+      "blockAttributes": {
+        "fontSize": 46,
+        "fontFamily": "Montserrat",
+        "color": "#FFFFFF",
+        "alignment": "center",
+        "lineHeight": 1.2,
+        "letterSpacing": 2,
+        "paragraphSpacing": 0.4
+      },
+      "content": [
+        {
+          "text": "AURORA ",
+          "attributes": {
+            "bold": true,
+            "color": "#FFFFFF"
+          }
+        },
+        {
+          "text": "HOLOGRAPHIC",
+          "attributes": {
+            "bold": true,
+            "color": "#06B6D4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "aurora-sub",
+      "type": "paragraph",
+      "blockAttributes": {
+        "fontSize": 18,
+        "fontFamily": "Inter",
+        "color": "#E2E8F0",
+        "alignment": "center",
+        "lineHeight": 1.3,
+        "letterSpacing": 1,
+        "paragraphSpacing": 0
+      },
+      "content": [
+        {
+          "text": "Direct rich typography document loaded via JSON",
+          "attributes": {
+            "italic": true,
+            "color": "#CBD5E1"
+          }
+        }
+      ]
+    }
+  ]
+}
