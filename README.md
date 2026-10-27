@@ -61,7 +61,7 @@ Pure HTML5 2D canvas procedural particle and optical shaders running at 60 FPS:
 
 ```bash
 # Clone repository
-git clone https://github.com/flaskarchitect/esperanzakonva-forge.git
+git clone https://github.com/JupyterJones/esperanzakonva-forge.git
 cd esperanzakonva-forge
 
 # Install dependencies
