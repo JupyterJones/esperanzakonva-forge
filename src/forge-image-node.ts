@@ -20,6 +20,7 @@ export interface ForgeImageConfig {
   draggable?: boolean;
   frames?: ForgeImageFrame[];
   isAnimated?: boolean;
+  isVideo?: boolean;
   shadowColor?: string;
   shadowBlur?: number;
 }
@@ -28,6 +29,8 @@ export class ForgeImageNode extends Konva.Group {
   public konvaImage: Konva.Image;
   public src: string;
   public isAnimated: boolean = false;
+  public isVideo: boolean = false;
+  public videoElement: HTMLVideoElement | null = null;
   public frames: ForgeImageFrame[] = [];
   public currentFrameIndex: number = 0;
   public isPlaying: boolean = true;
@@ -53,8 +56,14 @@ export class ForgeImageNode extends Konva.Group {
     });
 
     this.src = config.src;
-    this.isAnimated = config.isAnimated ?? (config.frames ? config.frames.length > 1 : false);
-    this.frames = config.frames ?? [];
+    this.isVideo = config.isVideo ?? (typeof HTMLVideoElement !== "undefined" && initialElement instanceof HTMLVideoElement);
+    if (this.isVideo && initialElement instanceof HTMLVideoElement) {
+      this.videoElement = initialElement;
+      this.isAnimated = true;
+    } else {
+      this.isAnimated = config.isAnimated ?? (config.frames ? config.frames.length > 1 : false);
+      this.frames = config.frames ?? [];
+    }
 
     this.konvaImage = new Konva.Image({
       image: initialElement,
@@ -78,9 +87,29 @@ export class ForgeImageNode extends Konva.Group {
       if (stage) stage.container().style.cursor = "default";
     });
 
-    if (this.isAnimated && this.frames.length > 1) {
+    if (this.isVideo) {
+      this.startVideoLoop();
+    } else if (this.isAnimated && this.frames.length > 1) {
       this.startAnimationLoop();
     }
+  }
+
+  private startVideoLoop() {
+    this.stopAnimationLoop();
+    if (this.isDestroyed || !this.videoElement) return;
+
+    const loop = () => {
+      if (this.isDestroyed || !this.videoElement) return;
+      if (this.isPlaying && !this.videoElement.paused) {
+        const layer = this.getLayer();
+        if (layer) {
+          layer.batchDraw();
+        }
+      }
+      this.animTimer = requestAnimationFrame(loop);
+    };
+
+    this.animTimer = requestAnimationFrame(loop);
   }
 
   public setFrames(frames: ForgeImageFrame[]) {
@@ -129,6 +158,16 @@ export class ForgeImageNode extends Konva.Group {
   }
 
   public togglePlayPause(): boolean {
+    if (this.videoElement) {
+      if (this.videoElement.paused) {
+        this.videoElement.play().catch(() => {});
+        this.isPlaying = true;
+      } else {
+        this.videoElement.pause();
+        this.isPlaying = false;
+      }
+      return this.isPlaying;
+    }
     this.isPlaying = !this.isPlaying;
     return this.isPlaying;
   }
@@ -158,6 +197,7 @@ export class ForgeImageNode extends Konva.Group {
       opacity: this.opacity(),
       src: this.src,
       isAnimated: this.isAnimated,
+      isVideo: this.isVideo,
       shadowColor: this.konvaImage.shadowColor(),
       shadowBlur: this.konvaImage.shadowBlur(),
     };
@@ -166,6 +206,12 @@ export class ForgeImageNode extends Konva.Group {
   public destroy(): this {
     this.isDestroyed = true;
     this.stopAnimationLoop();
+    if (this.videoElement) {
+      this.videoElement.pause();
+      this.videoElement.removeAttribute("src");
+      this.videoElement.load();
+      this.videoElement = null;
+    }
     return super.destroy();
   }
 }

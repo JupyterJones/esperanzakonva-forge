@@ -1,8 +1,12 @@
 import Konva from "konva";
 import { RichTextNode } from "./rich-text-engine";
 import { ForgeImageNode } from "./forge-image-node";
-import { createForgeImageFromDataUrl } from "./media-loader";
-import { RichTextDocument, DocumentCurve, FormattingState } from "./types";
+import {
+  createForgeImageFromDataUrl,
+  createAnimatedRecBadge,
+  createAnimatedCyberRing,
+} from "./media-loader";
+import { RichTextDocument, TextBlock, DocumentCurve, FormattingState } from "./types";
 import { TemplateDefinition } from "./presets";
 import { AtmosphericFXManager } from "./atmospheric-fx";
 
@@ -210,13 +214,7 @@ export class CanvasManager {
       if (this.onSelectionChangeCallback) {
         this.onSelectionChangeCallback(node);
       }
-      if (node instanceof RichTextNode) {
-        this.emitFormattingChange();
-      } else {
-        if (this.onFormattingChangeCallback) {
-          this.onFormattingChangeCallback(null, null);
-        }
-      }
+      this.emitFormattingChange();
       if (this.onImageSelectionCallback) {
         this.onImageSelectionCallback(node instanceof ForgeImageNode ? node : null);
       }
@@ -226,9 +224,7 @@ export class CanvasManager {
       if (this.onSelectionChangeCallback) {
         this.onSelectionChangeCallback(null);
       }
-      if (this.onFormattingChangeCallback) {
-        this.onFormattingChangeCallback(null, null);
-      }
+      this.emitFormattingChange();
       if (this.onImageSelectionCallback) {
         this.onImageSelectionCallback(null);
       }
@@ -236,11 +232,13 @@ export class CanvasManager {
   }
 
   public emitFormattingChange() {
-    const node = this.getSelected();
-    if (node && this.onFormattingChangeCallback) {
-      const state = node.getFormattingState();
-      state.canUndo = this.undoStack.length > 0;
-      state.canRedo = this.redoStack.length > 0;
+    if (this.onFormattingChangeCallback) {
+      const node = this.getSelected();
+      const state = node ? node.getFormattingState() : null;
+      if (state) {
+        state.canUndo = this.canUndo();
+        state.canRedo = this.canRedo();
+      }
       this.onFormattingChangeCallback(state, node);
     }
   }
@@ -254,27 +252,33 @@ export class CanvasManager {
     bold: boolean;
     italic: boolean;
     curveAmount: number;
+    isList?: boolean;
+    listStyle?: string;
+    alignment?: "left" | "center" | "right";
   }>): RichTextNode {
     const defaultColor = options?.color ?? "#F8FAFC";
-    const doc: RichTextDocument = {
-      baseFontSize: fontSize,
-      curve: options?.curveAmount !== undefined ? { enabled: true, amount: options.curveAmount } : undefined,
-      blocks: [
-        {
-          id: `block-${Date.now()}`,
-          type: "paragraph",
+    const rawLines = text.split("\n");
+    const isList = options?.isList ?? false;
+    const defaultAlign = isList ? "left" : (options?.alignment ?? "center");
+
+    const blocks: TextBlock[] = (isList || rawLines.length > 1)
+      ? rawLines.map((line, idx) => ({
+          id: `block-${Date.now()}-${idx}`,
+          type: isList ? ("list-item" as const) : ("paragraph" as const),
           blockAttributes: {
             fontSize,
             fontFamily: options?.fontFamily ?? "Poppins",
             color: defaultColor,
-            alignment: "center",
-            lineHeight: 1.2,
+            alignment: defaultAlign,
+            lineHeight: 1.4,
             letterSpacing: 0,
-            paragraphSpacing: 0.4,
+            paragraphSpacing: isList ? 0.25 : 0.4,
+            listType: isList ? (options?.listStyle === "decimal" ? "number" : "bullet") : undefined,
+            listStyle: isList ? (options?.listStyle as any ?? "★") : undefined,
           },
           content: [
             {
-              text,
+              text: line,
               attributes: {
                 bold: options?.bold,
                 italic: options?.italic,
@@ -284,8 +288,39 @@ export class CanvasManager {
               },
             },
           ],
-        },
-      ],
+        }))
+      : [
+          {
+            id: `block-${Date.now()}`,
+            type: "paragraph",
+            blockAttributes: {
+              fontSize,
+              fontFamily: options?.fontFamily ?? "Poppins",
+              color: defaultColor,
+              alignment: defaultAlign,
+              lineHeight: 1.2,
+              letterSpacing: 0,
+              paragraphSpacing: 0.4,
+            },
+            content: [
+              {
+                text,
+                attributes: {
+                  bold: options?.bold,
+                  italic: options?.italic,
+                  fontSize,
+                  fontFamily: options?.fontFamily ?? "Poppins",
+                  color: defaultColor,
+                },
+              },
+            ],
+          },
+        ];
+
+    const doc: RichTextDocument = {
+      baseFontSize: fontSize,
+      curve: options?.curveAmount !== undefined ? { enabled: true, amount: options.curveAmount } : undefined,
+      blocks,
     };
 
     const targetWidth = Math.min(options?.width ?? Math.min(540, this.canvasWidth - 40), this.canvasWidth - 40);
@@ -582,6 +617,8 @@ export class CanvasManager {
     }
 
     this.activeEditingNode = node;
+    node.visible(false);
+    this.mainLayer.batchDraw();
 
     // Create textarea
     const textarea = document.createElement("textarea");
@@ -590,17 +627,18 @@ export class CanvasManager {
 
     // Style textarea to match text node
     const state = node.getFormattingState();
+    const isList = node.isList();
     textarea.style.position = "absolute";
     textarea.style.zIndex = "100";
     textarea.style.fontFamily = `"${state.fontFamily}", sans-serif`;
     textarea.style.fontSize = `${state.fontSize * this.currentScale}px`;
     textarea.style.fontWeight = String(state.fontWeight);
     textarea.style.color = state.color;
-    textarea.style.textAlign = state.alignment;
+    textarea.style.textAlign = isList ? "left" : state.alignment;
     textarea.style.lineHeight = String(state.lineHeight);
     textarea.style.border = "2px solid #FF6B35";
     textarea.style.borderRadius = "8px";
-    textarea.style.padding = "6px 10px";
+    textarea.style.padding = isList ? "8px 12px 8px 32px" : "8px 12px";
     textarea.style.outline = "none";
     textarea.style.background = "rgba(14, 19, 31, 0.96)";
     textarea.style.color = state.color || "#F8FAFC";
@@ -656,6 +694,8 @@ export class CanvasManager {
     if (!this.editingOverlay || !this.activeEditingNode) return;
     this.container.classList.remove("editing-active");
     this.activeEditingNode.setText(this.editingOverlay.value);
+    this.activeEditingNode.visible(true);
+    this.mainLayer.batchDraw();
     this.container.removeChild(this.editingOverlay);
     this.editingOverlay = null;
     this.activeEditingNode = null;
@@ -678,6 +718,14 @@ export class CanvasManager {
   }
 
   // --- History (Undo / Redo) ---
+  public canUndo(): boolean {
+    return this.undoStack.length > 1;
+  }
+
+  public canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
   public saveHistory() {
     if (this.isHistoryLocked) return;
     const snapshot = this.createSnapshot();
@@ -718,8 +766,10 @@ export class CanvasManager {
       rotation: box.rotation(),
       document: box.getDocument(),
     }));
+    const images = this.getImages().map((img) => img.toJSONData());
     return {
       boxes,
+      images,
       background: this.getCanvasBackground(),
     };
   }
@@ -728,12 +778,18 @@ export class CanvasManager {
     this.selectionTransformer.nodes([]);
     const children = [...this.mainLayer.children];
     for (const child of children) {
-      if (child !== this.selectionTransformer) child.destroy();
+      if (
+        child !== this.selectionTransformer &&
+        child !== this.atmosphericFX.getBgShape() &&
+        child !== this.atmosphericFX.getFgShape()
+      ) {
+        child.destroy();
+      }
     }
 
     this.setCanvasBackground(snapshot.background);
 
-    let firstNode: RichTextNode | null = null;
+    let firstNode: Konva.Node | null = null;
     for (const b of snapshot.boxes) {
       const node = new RichTextNode({
         x: b.x,
@@ -747,9 +803,54 @@ export class CanvasManager {
       if (!firstNode) firstNode = node;
     }
 
-    if (firstNode) {
-      this.selectNode(firstNode);
+    if (snapshot.images && snapshot.images.length > 0) {
+      for (const imgData of snapshot.images) {
+        if (imgData.src.startsWith("built-in:animated-rec-badge")) {
+          const frames = createAnimatedRecBadge();
+          const node = new ForgeImageNode(
+            { ...imgData, frames, isAnimated: true },
+            frames[0].canvas
+          );
+          this.mainLayer.add(node);
+        } else if (imgData.src.startsWith("built-in:animated-cyber-ring")) {
+          const frames = createAnimatedCyberRing();
+          const node = new ForgeImageNode(
+            { ...imgData, frames, isAnimated: true },
+            frames[0].canvas
+          );
+          this.mainLayer.add(node);
+        } else if (imgData.src) {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            const node = new ForgeImageNode(
+              {
+                x: imgData.x,
+                y: imgData.y,
+                width: imgData.width,
+                height: imgData.height,
+                scaleX: imgData.scaleX,
+                scaleY: imgData.scaleY,
+                rotation: imgData.rotation,
+                opacity: imgData.opacity,
+                src: imgData.src,
+                isAnimated: imgData.isAnimated,
+                shadowColor: imgData.shadowColor,
+                shadowBlur: imgData.shadowBlur,
+              },
+              img
+            );
+            this.mainLayer.add(node);
+            this.atmosphericFX.refreshZIndex(this.selectionTransformer);
+            this.mainLayer.batchDraw();
+          };
+          img.src = imgData.src;
+        }
+      }
     }
+
+    this.atmosphericFX.refreshZIndex(this.selectionTransformer);
+    this.selectNode(firstNode);
     this.mainLayer.draw();
   }
 

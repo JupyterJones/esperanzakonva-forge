@@ -188,7 +188,7 @@ export const TEMPLATES: TemplateDefinition[] = [
               },
               content: [
                 {
-                  text: "★ ESPERANZA KONVA FORGE ★",
+                  text: "✦ FLASKARCHITECT PRESENTS ✦",
                   attributes: { bold: true },
                 },
               ],
@@ -197,9 +197,9 @@ export const TEMPLATES: TemplateDefinition[] = [
         },
       },
       {
-        x: 110,
+        x: 70,
         y: 155,
-        width: 620,
+        width: 700,
         document: {
           baseFontSize: 18,
           shadow: {
@@ -223,7 +223,7 @@ export const TEMPLATES: TemplateDefinition[] = [
               },
               content: [
                 {
-                  text: "NEO ",
+                  text: "ESPERANZA ",
                   attributes: {
                     color: "#00F0FF",
                     strokeColor: "#022B3A",
@@ -231,7 +231,7 @@ export const TEMPLATES: TemplateDefinition[] = [
                   },
                 },
                 {
-                  text: "TOKYO FORGE",
+                  text: "KONVA FORGE",
                   attributes: {
                     color: "#FF6B35",
                     strokeColor: "#1A0B05",
@@ -285,9 +285,9 @@ export const TEMPLATES: TemplateDefinition[] = [
         },
       },
       {
-        x: 190,
-        y: 365,
-        width: 460,
+        x: 130,
+        y: 345,
+        width: 620,
         document: {
           baseFontSize: 18,
           blocks: [
@@ -295,15 +295,15 @@ export const TEMPLATES: TemplateDefinition[] = [
               id: "bullet-1",
               type: "list-item",
               blockAttributes: {
-                fontSize: 17,
+                fontSize: 16,
                 fontFamily: "Poppins",
                 color: "#E2E8F0",
                 alignment: "left",
-                lineHeight: 1.5,
+                lineHeight: 1.45,
                 letterSpacing: 0,
                 listType: "bullet",
                 listStyle: "★",
-                paragraphSpacing: 0.4,
+                paragraphSpacing: 0.3,
               },
               content: [
                 {
@@ -316,19 +316,19 @@ export const TEMPLATES: TemplateDefinition[] = [
               id: "bullet-2",
               type: "list-item",
               blockAttributes: {
-                fontSize: 17,
+                fontSize: 16,
                 fontFamily: "Poppins",
                 color: "#CBD5E1",
                 alignment: "left",
-                lineHeight: 1.5,
+                lineHeight: 1.45,
                 letterSpacing: 0,
                 listType: "bullet",
                 listStyle: "★",
-                paragraphSpacing: 0.4,
+                paragraphSpacing: 0.3,
               },
               content: [
                 {
-                  text: "Sub-pixel radial curvature & multi-color linear gradients",
+                  text: "Twenty-four Image Special Effects",
                   attributes: {},
                 },
               ],
@@ -337,19 +337,40 @@ export const TEMPLATES: TemplateDefinition[] = [
               id: "bullet-3",
               type: "list-item",
               blockAttributes: {
-                fontSize: 17,
+                fontSize: 16,
                 fontFamily: "Poppins",
                 color: "#CBD5E1",
                 alignment: "left",
-                lineHeight: 1.5,
+                lineHeight: 1.45,
                 letterSpacing: 0,
                 listType: "bullet",
                 listStyle: "★",
-                paragraphSpacing: 0.4,
+                paragraphSpacing: 0.3,
               },
               content: [
                 {
                   text: "Double-click live canvas editing with full undo/redo stack",
+                  attributes: { color: "#CBD5E1" },
+                },
+              ],
+            },
+            {
+              id: "bullet-4",
+              type: "list-item",
+              blockAttributes: {
+                fontSize: 16,
+                fontFamily: "Poppins",
+                color: "#CBD5E1",
+                alignment: "left",
+                lineHeight: 1.45,
+                letterSpacing: 0,
+                listType: "bullet",
+                listStyle: "★",
+                paragraphSpacing: 0.3,
+              },
+              content: [
+                {
+                  text: "Github: https://github.com/JupyterJones/esperanzakonva-forge",
                   attributes: { bold: true, color: "#FF6B35" },
                 },
               ],

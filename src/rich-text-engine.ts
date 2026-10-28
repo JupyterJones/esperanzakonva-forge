@@ -15,6 +15,7 @@ interface LaidOutWord {
   run: TextRun;
   block: TextBlock;
   isSpace: boolean;
+  isNewline?: boolean;
 }
 
 interface LaidOutLine {
@@ -146,33 +147,58 @@ export class RichTextNode extends Konva.Shape {
   }
 
   public setText(plainText: string) {
-    const lines = plainText.split("\n");
-    const firstBlock = this.doc.blocks[0] ?? {
+    const rawLines = plainText.split("\n");
+    const fallbackBlock: TextBlock = this.doc.blocks[0] ?? {
       id: "b-0",
       type: "paragraph",
       blockAttributes: {
-        fontSize: 32,
+        fontSize: 18,
         fontFamily: "Poppins",
         color: "#F8FAFC",
-        alignment: "center",
-        lineHeight: 1.2,
+        alignment: "left",
+        lineHeight: 1.4,
         letterSpacing: 0,
-        paragraphSpacing: 0.4,
+        paragraphSpacing: 0.3,
       },
       content: [{ text: "", attributes: {} }],
     };
 
-    this.doc.blocks = lines.map((line, idx) => ({
-      id: `block-${idx}`,
-      type: firstBlock.type,
-      blockAttributes: { ...firstBlock.blockAttributes },
-      content: [
-        {
-          text: line,
-          attributes: { ...(firstBlock.content[0]?.attributes ?? {}) },
-        },
-      ],
-    }));
+    const isDocumentList = this.doc.blocks.some((b) => b.type === "list-item");
+    const defaultListStyle =
+      this.doc.blocks.find((b) => b.type === "list-item")?.blockAttributes.listStyle || "★";
+
+    this.doc.blocks = rawLines.map((rawLine, idx) => {
+      const existing = this.doc.blocks[idx];
+      const template = existing ?? this.doc.blocks[this.doc.blocks.length - 1] ?? fallbackBlock;
+      const isListItem = existing ? existing.type === "list-item" : isDocumentList;
+
+      let line = rawLine;
+      // Strip any user-typed bullet characters (e.g. •, ★, -, *, 1.) to avoid double bullets
+      if (isListItem) {
+        line = line.replace(/^[\s]*[•★\*\-]\s*/, "").replace(/^[\s]*\d+[\.\)]\s*/, "");
+      }
+
+      const existingAttrs = { ...(existing?.content[0]?.attributes ?? template.content[0]?.attributes ?? {}) };
+      const blockAttrs = { ...(existing?.blockAttributes ?? template.blockAttributes) };
+
+      if (isListItem) {
+        blockAttrs.alignment = "left";
+        blockAttrs.listType = blockAttrs.listType ?? (defaultListStyle === "decimal" ? "number" : "bullet");
+        blockAttrs.listStyle = blockAttrs.listStyle ?? (defaultListStyle as any);
+      }
+
+      return {
+        id: existing?.id ?? `block-${idx}-${Date.now()}`,
+        type: isListItem ? ("list-item" as const) : template.type,
+        blockAttributes: blockAttrs,
+        content: [
+          {
+            text: line,
+            attributes: existingAttrs,
+          },
+        ],
+      };
+    });
 
     this.updateLayout();
     this.getLayer()?.batchDraw();
@@ -201,20 +227,34 @@ export class RichTextNode extends Konva.Shape {
         const text = run.text;
         if (!text) continue;
 
-        // Split text by space while preserving tokens
-        const tokens = text.split(/(\s+)/);
-        for (const token of tokens) {
-          if (!token) continue;
-          const isSpace = /^\s+$/.test(token);
-          this.applyFontToCtx(ctx, block, run);
-          const metrics = ctx.measureText(token);
-          words.push({
-            text: token,
-            width: metrics.width + (block.blockAttributes.letterSpacing || 0),
-            run,
-            block,
-            isSpace,
-          });
+        // Split text by lines first so explicit \n is preserved
+        const sublines = text.split("\n");
+        for (let sIdx = 0; sIdx < sublines.length; sIdx++) {
+          if (sIdx > 0) {
+            words.push({
+              text: "\n",
+              width: 0,
+              run,
+              block,
+              isSpace: true,
+              isNewline: true,
+            });
+          }
+          const tokens = sublines[sIdx].split(/(\s+)/);
+          for (const token of tokens) {
+            if (!token) continue;
+            const isSpace = /^\s+$/.test(token);
+            this.applyFontToCtx(ctx, block, run);
+            const metrics = ctx.measureText(token);
+            words.push({
+              text: token,
+              width: metrics.width + (block.blockAttributes.letterSpacing || 0),
+              run,
+              block,
+              isSpace,
+              isNewline: false,
+            });
+          }
         }
       }
 
@@ -243,6 +283,26 @@ export class RichTextNode extends Konva.Shape {
 
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
+
+        if (word.isNewline) {
+          const lineStats = this.computeLineStats(lineWords);
+          lines.push({
+            words: lineWords,
+            width: currentLineWidth,
+            height: lineStats.height,
+            ascent: lineStats.ascent,
+            y: currentY + lineStats.ascent,
+            block,
+            isFirstLineOfBlock: isFirstLine,
+            blockIndex: bIdx,
+          });
+          currentY += lineStats.height;
+          isFirstLine = false;
+          lineWords = [];
+          currentLineWidth = 0;
+          continue;
+        }
+
         if (word.isSpace && lineWords.length === 0) {
           continue; // Trim leading space
         }
@@ -395,12 +455,17 @@ export class RichTextNode extends Konva.Shape {
       const availableWidth = boxWidth - listIndent;
 
       // Calculate horizontal start position based on alignment
-      let startX = listIndent;
-      const align = block.blockAttributes.alignment || "left";
-      if (align === "center") {
-        startX = listIndent + Math.max(0, (availableWidth - line.width) / 2);
-      } else if (align === "right") {
-        startX = listIndent + Math.max(0, availableWidth - line.width);
+      let startX = 0;
+      if (isList) {
+        // List items are ALWAYS left-aligned directly following the bullet marker!
+        startX = listIndent;
+      } else {
+        const align = block.blockAttributes.alignment || "left";
+        if (align === "center") {
+          startX = Math.max(0, (boxWidth - line.width) / 2);
+        } else if (align === "right") {
+          startX = Math.max(0, boxWidth - line.width);
+        }
       }
 
       // Draw list bullet / number on first line of block
@@ -773,13 +838,50 @@ export class RichTextNode extends Konva.Shape {
     this.getLayer()?.batchDraw();
   }
 
+  public isList(): boolean {
+    return this.doc.blocks.some((b) => b.type === "list-item");
+  }
+
   public toggleBulletList(bulletStyle: string = "disc") {
-    const isList = this.doc.blocks.some((b) => b.type === "list-item");
-    for (const b of this.doc.blocks) {
-      b.type = isList ? "paragraph" : "list-item";
-      b.blockAttributes.listType = isList ? undefined : (bulletStyle === "decimal" ? "number" : "bullet");
-      b.blockAttributes.listStyle = isList ? undefined : (bulletStyle as any);
+    const isList = this.isList();
+    const targetType = isList ? "paragraph" : "list-item";
+    const targetAlign = isList ? "center" : "left";
+
+    const newBlocks: TextBlock[] = [];
+    for (let bIdx = 0; bIdx < this.doc.blocks.length; bIdx++) {
+      const b = this.doc.blocks[bIdx];
+      const fullText = b.content.map((c) => c.text).join("");
+      const lines = fullText.split("\n");
+
+      if (lines.length > 1) {
+        for (let lIdx = 0; lIdx < lines.length; lIdx++) {
+          newBlocks.push({
+            id: `b-${bIdx}-${lIdx}-${Date.now()}`,
+            type: targetType,
+            blockAttributes: {
+              ...b.blockAttributes,
+              alignment: targetAlign,
+              listType: isList ? undefined : (bulletStyle === "decimal" ? "number" : "bullet"),
+              listStyle: isList ? undefined : (bulletStyle as any),
+            },
+            content: [
+              {
+                text: lines[lIdx],
+                attributes: { ...(b.content[0]?.attributes ?? {}) },
+              },
+            ],
+          });
+        }
+      } else {
+        b.type = targetType;
+        b.blockAttributes.alignment = targetAlign;
+        b.blockAttributes.listType = isList ? undefined : (bulletStyle === "decimal" ? "number" : "bullet");
+        b.blockAttributes.listStyle = isList ? undefined : (bulletStyle as any);
+        newBlocks.push(b);
+      }
     }
+
+    this.doc.blocks = newBlocks;
     this.updateLayout();
     this.getLayer()?.batchDraw();
   }

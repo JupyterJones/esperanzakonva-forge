@@ -218,20 +218,22 @@ body {
 
 /* Sidebar Tab Rail */
 .sidebar-tab {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.5rem 0.3rem;
-  font-size: 0.75rem;
+  padding: 0.6rem 0.35rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: #94A3B8;
-  border-radius: 0.5rem;
+  border-radius: 0.55rem;
   background: transparent;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 .sidebar-tab:hover {
   color: #F8FAFC;
@@ -459,10 +461,10 @@ body {
 
 /* Fixed Studio Column Dimensions (Consistent across all tabs & menus) */
 #left-sidebar, .w-80 {
-  width: 320px !important;
-  min-width: 320px !important;
-  max-width: 320px !important;
-  flex: 0 0 320px !important;
+  width: 400px !important;
+  min-width: 400px !important;
+  max-width: 400px !important;
+  flex: 0 0 400px !important;
   box-sizing: border-box !important;
   overflow-x: hidden !important;
 }
@@ -724,10 +726,10 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.35rem 0.4rem;
-  font-size: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  border-radius: 0.45rem;
+  border-radius: 0.55rem;
   background: #0E131F;
   border: 1px solid var(--forge-border-subtle);
   color: #CBD5E1;
@@ -751,9 +753,9 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.5rem;
-  font-size: 0.7rem;
-  border-radius: 0.45rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.74rem;
+  border-radius: 0.55rem;
   background: #0E131F;
   border: 1px solid var(--forge-border-subtle);
   color: #94A3B8;
@@ -779,4 +781,143 @@ main {
 .atm-effect-toggle.active .atm-dot {
   background: #00F0FF;
   box-shadow: 0 0 8px #00F0FF;
+}
+
+/* Modeled directly after /home/jack/Desktop/effects/ */
+.effect-item {
+  background: rgba(14, 19, 31, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.effect-item:hover {
+  border-color: rgba(255, 121, 3, 0.3);
+}
+
+.effect-item.active {
+  border-color: #00F0FF;
+  background: rgba(0, 240, 255, 0.05);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.12);
+}
+
+.effect-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.effect-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.effect-checkbox {
+  accent-color: #00F0FF;
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+}
+
+.effect-title {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #E2E8F0;
+  transition: color 0.15s ease;
+}
+
+.effect-item.active .effect-title {
+  color: #00F0FF;
+}
+
+.effect-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.color-picker-swatch {
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  box-sizing: border-box;
+}
+.color-picker-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.color-picker-swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
+.effect-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.effect-slider-row label {
+  font-size: 0.68rem;
+  color: #94A3B8;
+  width: 42px;
+  flex-shrink: 0;
+}
+
+.effect-slider-row input[type="range"] {
+  flex: 1;
+}
+
+.effect-opacity-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  color: #FFA62B;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Compact Kinetic Presets Chip Grid */
+.motion-preset-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #0E131F;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #CBD5E1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.motion-preset-chip:hover {
+  background: rgba(255, 121, 3, 0.1);
+  border-color: rgba(255, 121, 3, 0.4);
+  color: #FFA62B;
+}
+
+.motion-preset-chip.active {
+  background: linear-gradient(135deg, rgba(255, 121, 3, 0.25) 0%, rgba(255, 166, 43, 0.15) 100%);
+  border-color: #FF7903;
+  color: #FFA62B;
+  box-shadow: 0 0 8px rgba(255, 121, 3, 0.25);
 }

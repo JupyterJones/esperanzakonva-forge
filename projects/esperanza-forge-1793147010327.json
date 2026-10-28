@@ -1,0 +1,36 @@
+{
+  "baseFontSize": 18,
+  "curve": {
+    "enabled": true,
+    "amount": 140
+  },
+  "shadow": {
+    "color": "#00F0FF",
+    "blur": 14,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "blocks": [
+    {
+      "id": "top-arc",
+      "type": "paragraph",
+      "blockAttributes": {
+        "fontSize": 22,
+        "fontFamily": "Space Grotesk",
+        "color": "#00F0FF",
+        "alignment": "center",
+        "lineHeight": 1.2,
+        "letterSpacing": 4,
+        "paragraphSpacing": 0
+      },
+      "content": [
+        {
+          "text": "✦ FLASKARCHITECT PRESENTS ✦",
+          "attributes": {
+            "bold": true
+          }
+        }
+      ]
+    }
+  ]
+}

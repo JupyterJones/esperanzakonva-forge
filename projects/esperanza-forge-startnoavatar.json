@@ -1,0 +1,42 @@
+{
+  "baseFontSize": 18,
+  "shadow": {
+    "color": "#FF6B35",
+    "offsetX": 0,
+    "offsetY": 0,
+    "blur": 24
+  },
+  "blocks": [
+    {
+      "id": "main-title",
+      "type": "paragraph",
+      "blockAttributes": {
+        "fontSize": 66,
+        "fontFamily": "Bebas Neue",
+        "color": "#FF6B35",
+        "alignment": "center",
+        "lineHeight": 1.05,
+        "letterSpacing": 3,
+        "paragraphSpacing": 0.2
+      },
+      "content": [
+        {
+          "text": "ESPERANZA ",
+          "attributes": {
+            "color": "#00F0FF",
+            "strokeColor": "#022B3A",
+            "strokeWidth": 5
+          }
+        },
+        {
+          "text": "KONVA FORGE",
+          "attributes": {
+            "color": "#FF6B35",
+            "strokeColor": "#1A0B05",
+            "strokeWidth": 5
+          }
+        }
+      ]
+    }
+  ]
+}

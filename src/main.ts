@@ -63,11 +63,32 @@ import {
   Upload,
   Crosshair,
   Zap,
+  Folder,
+  Save,
+  FolderOpen,
+  Palette,
+  Layers,
+  Music,
+  Volume2,
+  VolumeX,
+  SkipBack,
+  SkipForward,
 } from "lucide";
 import "./style.css";
+import { SoundManager } from "./sound-manager";
 
 const ICONS = {
   Flame,
+  Layers,
+  Music,
+  Volume2,
+  VolumeX,
+  SkipBack,
+  SkipForward,
+  Folder,
+  Save,
+  FolderOpen,
+  Palette,
   BookOpen,
   Minimize2,
   Code,
@@ -115,12 +136,15 @@ class EsperanzaKonvaForgeApp {
   private canvasManager: CanvasManager;
   private toolbarController: ToolbarController;
   private motionEffectsManager: MotionEffectsManager;
+  private soundManager: SoundManager;
+  private syncAtmosphericUI: (() => void) | null = null;
 
   constructor() {
     const canvasContainer = document.getElementById("konva-container") as HTMLDivElement;
     this.canvasManager = new CanvasManager(canvasContainer);
     this.toolbarController = new ToolbarController(this.canvasManager);
     this.motionEffectsManager = new MotionEffectsManager(this.canvasManager);
+    this.soundManager = new SoundManager();
 
     this.renderLeftSidebar();
     this.setupTopNav();
@@ -129,12 +153,58 @@ class EsperanzaKonvaForgeApp {
     this.setupMotionFX();
     this.setupAtmosphericFX();
     this.setupMediaControls();
+    this.setupSoundControls();
 
-    // Load initial showcase template
-    this.canvasManager.loadTemplate(TEMPLATES[0]);
+    // Load initial starting project (/projects/esperanza-forge-start.json)
+    this.loadInitialProject();
 
     // Initialize icons
     createIcons({ icons: ICONS });
+  }
+
+  private async loadInitialProject() {
+    try {
+      const electronApi = (window as any).electronAPI;
+      let jsonContent: string | null = null;
+
+      if (electronApi && electronApi.loadProjectFile) {
+        const res = await electronApi.loadProjectFile("esperanza-forge-start.json");
+        if (res && res.success && res.content) {
+          jsonContent = res.content;
+        }
+      }
+
+      if (!jsonContent) {
+        const candidates = [
+          "/projects/esperanza-forge-start.json",
+          "./projects/esperanza-forge-start.json",
+          "projects/esperanza-forge-start.json",
+        ];
+        for (const url of candidates) {
+          try {
+            const res = await fetch(url);
+            if (res.ok) {
+              jsonContent = await res.text();
+              break;
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (jsonContent) {
+        const success = this.canvasManager.importJSON(jsonContent);
+        if (success) {
+          this.syncAtmosphericUI?.();
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not load /projects/esperanza-forge-start.json, falling back:", err);
+    }
+
+    // Fallback if file not found
+    this.canvasManager.loadTemplate(TEMPLATES[0]);
+    this.syncAtmosphericUI?.();
   }
 
   private renderLeftSidebar() {
@@ -188,16 +258,18 @@ class EsperanzaKonvaForgeApp {
     };
 
     document.getElementById("add-bullet-list")!.onclick = () => {
-      const node = this.canvasManager.addText(
+      this.canvasManager.addText(
         "Zero license restrictions or watermarks\nNative vector Canvas 2D precision\nFull inline rich text editing",
         18,
         {
           fontFamily: "Poppins",
           color: "#E2E8F0",
+          isList: true,
+          alignment: "left",
+          listStyle: "★",
+          width: 520,
         }
       );
-      node.toggleBulletList("★");
-      this.canvasManager.saveHistory();
     };
 
     // 3. Templates Tab
@@ -223,6 +295,7 @@ class EsperanzaKonvaForgeApp {
         const tpl = TEMPLATES.find((t) => t.id === id);
         if (tpl) {
           this.canvasManager.loadTemplate(tpl);
+          this.syncAtmosphericUI?.();
         }
       };
     });
@@ -293,6 +366,57 @@ class EsperanzaKonvaForgeApp {
       btnOpenProjects.classList.remove("hidden");
       btnOpenProjects.onclick = () => {
         electronApi.openProjectsFolder();
+      };
+    }
+
+    // Direct 1-Click Save Project JSON
+    const saveProjectJSON = () => {
+      const json = this.canvasManager.exportJSON();
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const filename = `esperanza-project-${Date.now()}.json`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      if (electronApi) {
+        electronApi.saveProjectFile(filename, json, false);
+      }
+    };
+
+    const btnSaveDirect = document.getElementById("btn-save-project-direct");
+    if (btnSaveDirect) {
+      btnSaveDirect.onclick = saveProjectJSON;
+    }
+
+    // Direct 1-Click Load Project JSON
+    const btnLoadDirect = document.getElementById("btn-load-project-direct");
+    const loadInput = document.getElementById("load-project-file-input") as HTMLInputElement | null;
+    if (btnLoadDirect && loadInput) {
+      btnLoadDirect.onclick = () => {
+        loadInput.click();
+      };
+      loadInput.onchange = (e: any) => {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const content = event.target?.result as string;
+          if (content) {
+            const success = this.canvasManager.importJSON(content);
+            if (!success) {
+              alert("Could not load project: invalid JSON structure.");
+            } else {
+              this.syncAtmosphericUI?.();
+            }
+          }
+        };
+        reader.readAsText(file);
+        loadInput.value = "";
       };
     }
 
@@ -495,6 +619,23 @@ class EsperanzaKonvaForgeApp {
         "absolute bottom-3 right-3 text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-400 border border-cyan-500/30 pointer-events-none";
       applyBtnText.textContent = "Apply to Text Box";
     };
+
+    const btnSaveJsonModal = document.getElementById("btn-save-json-file");
+    if (btnSaveJsonModal) {
+      btnSaveJsonModal.onclick = () => {
+        const content = jsonEditor.value || this.canvasManager.exportJSON();
+        const blob = new Blob([content], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const filename = `esperanza-forge-${Date.now()}.json`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+    }
 
     document.getElementById("btn-copy-json")!.onclick = () => {
       navigator.clipboard.writeText(jsonEditor.value);
@@ -750,29 +891,52 @@ class EsperanzaKonvaForgeApp {
   private setupAtmosphericFX() {
     const atmManager = this.canvasManager.atmosphericFX;
     const badge = document.getElementById("atm-active-badge");
-    const opacitySlider = document.getElementById("atm-opacity-slider") as HTMLInputElement | null;
-    const opacityVal = document.getElementById("atm-opacity-val");
+    const masterOpacitySlider = document.getElementById("atm-opacity-slider") as HTMLInputElement | null;
+    const masterOpacityVal = document.getElementById("atm-opacity-val");
     const blendSelect = document.getElementById("atm-blend-mode") as HTMLSelectElement | null;
-    const presetBtns = document.querySelectorAll<HTMLButtonElement>("[data-atm-preset]");
-    const effectToggles = document.querySelectorAll<HTMLButtonElement>("[data-atm-effect]");
+    const presetSelect = document.getElementById("atm-preset-selector") as HTMLSelectElement | null;
+    const btnClearAtmFX = document.getElementById("btn-clear-atm-fx");
+
+    const effectCards = document.querySelectorAll<HTMLElement>("[data-effect-key]");
 
     const updateUI = () => {
-      // 1. Update preset active state
+      // 1. Preset Selector
       const currentPreset = atmManager.getCurrentPresetId();
-      presetBtns.forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.atmPreset === currentPreset);
-      });
+      if (presetSelect) {
+        presetSelect.value = currentPreset || "";
+      }
 
-      // 2. Update individual effect toggles
+      // 2. Individual Effect Controls Sync
       let activeCount = 0;
-      effectToggles.forEach((btn) => {
-        const key = btn.dataset.atmEffect as AtmosphericEffectKey;
-        const isEnabled = atmManager.effects[key]?.enabled;
-        btn.classList.toggle("active", !!isEnabled);
-        if (isEnabled) activeCount++;
+      effectCards.forEach((card) => {
+        const key = card.dataset.effectKey as AtmosphericEffectKey;
+        const conf = atmManager.effects[key];
+        if (!conf) return;
+
+        const checkbox = card.querySelector<HTMLInputElement>("[data-effect-check]");
+        const colorPicker = card.querySelector<HTMLInputElement>("[data-effect-color]");
+        const opacitySlider = card.querySelector<HTMLInputElement>("[data-effect-opacity]");
+        const opacityVal = card.querySelector<HTMLElement>("[data-effect-val]");
+        const modeSelect = card.querySelector<HTMLSelectElement>("[data-effect-mode]");
+
+        if (checkbox) checkbox.checked = !!conf.enabled;
+        card.classList.toggle("active", !!conf.enabled);
+        if (conf.enabled) activeCount++;
+
+        const opPercent = Math.round((conf.opacity ?? 0) * 100);
+        if (opacitySlider) opacitySlider.value = String(opPercent);
+        if (opacityVal) opacityVal.textContent = `${opPercent}%`;
+
+        if (colorPicker && conf.color) {
+          colorPicker.value = conf.color;
+        }
+
+        if (modeSelect && conf.mode) {
+          modeSelect.value = conf.mode;
+        }
       });
 
-      // 3. Update active badge
+      // 3. Active Badge
       if (badge) {
         badge.textContent = `${activeCount} ACTIVE`;
         if (activeCount > 0) {
@@ -782,20 +946,22 @@ class EsperanzaKonvaForgeApp {
         }
       }
 
-      // 4. Update slider & blend mode values
-      if (opacitySlider && opacityVal) {
-        opacitySlider.value = String(atmManager.getMasterOpacity());
-        opacityVal.textContent = `${Math.round(atmManager.getMasterOpacity() * 100)}%`;
+      // 4. Master Controls
+      if (masterOpacitySlider && masterOpacityVal) {
+        masterOpacitySlider.value = String(atmManager.getMasterOpacity());
+        masterOpacityVal.textContent = `${Math.round(atmManager.getMasterOpacity() * 100)}%`;
       }
       if (blendSelect) {
         blendSelect.value = atmManager.getBlendMode();
       }
     };
 
-    // Preset buttons click
-    presetBtns.forEach((btn) => {
-      btn.onclick = () => {
-        const presetId = btn.dataset.atmPreset;
+    this.syncAtmosphericUI = updateUI;
+
+    // Preset Selection Change
+    if (presetSelect) {
+      presetSelect.onchange = () => {
+        const presetId = presetSelect.value;
         if (!presetId) return;
 
         atmManager.applyPreset(presetId);
@@ -806,35 +972,106 @@ class EsperanzaKonvaForgeApp {
         }
         this.canvasManager.mainLayer.batchDraw();
       };
-    });
+    }
 
-    // Individual effect toggle click
-    effectToggles.forEach((btn) => {
-      btn.onclick = () => {
-        const key = btn.dataset.atmEffect as AtmosphericEffectKey;
-        if (!key) return;
-
-        const newState = atmManager.toggleEffect(key);
+    // Clear All Button
+    if (btnClearAtmFX) {
+      btnClearAtmFX.onclick = () => {
+        atmManager.applyPreset("clean_slate");
         updateUI();
-
-        if (newState && !this.motionEffectsManager.getIsPlaying()) {
-          this.motionEffectsManager.play();
-        }
         this.canvasManager.mainLayer.batchDraw();
       };
+    }
+
+    // Bind Every Individual Effect Card Controls (Checkbox, Color Picker, Opacity Slider, Mode)
+    effectCards.forEach((card) => {
+      const key = card.dataset.effectKey as AtmosphericEffectKey;
+      if (!key) return;
+
+      const checkbox = card.querySelector<HTMLInputElement>("[data-effect-check]");
+      const colorPicker = card.querySelector<HTMLInputElement>("[data-effect-color]");
+      const opacitySlider = card.querySelector<HTMLInputElement>("[data-effect-opacity]");
+      const opacityVal = card.querySelector<HTMLElement>("[data-effect-val]");
+      const modeSelect = card.querySelector<HTMLSelectElement>("[data-effect-mode]");
+
+      // Checkbox Toggle
+      if (checkbox) {
+        checkbox.onchange = () => {
+          atmManager.setEffectConfig(key, { enabled: checkbox.checked });
+          card.classList.toggle("active", checkbox.checked);
+
+          if (checkbox.checked && !this.motionEffectsManager.getIsPlaying()) {
+            this.motionEffectsManager.play();
+          }
+
+          updateUI();
+          this.canvasManager.mainLayer.batchDraw();
+        };
+      }
+
+      // Individual Opacity Slider
+      if (opacitySlider) {
+        opacitySlider.oninput = () => {
+          const val = parseFloat(opacitySlider.value) / 100;
+          atmManager.setEffectConfig(key, { opacity: val });
+          if (opacityVal) opacityVal.textContent = `${opacitySlider.value}%`;
+
+          // Auto-enable if opacity moved from zero
+          if (val > 0 && !atmManager.effects[key]?.enabled) {
+            atmManager.setEffectConfig(key, { enabled: true });
+            if (checkbox) checkbox.checked = true;
+            card.classList.add("active");
+            if (!this.motionEffectsManager.getIsPlaying()) {
+              this.motionEffectsManager.play();
+            }
+          }
+
+          updateUI();
+          this.canvasManager.mainLayer.batchDraw();
+        };
+      }
+
+      // Individual Color Picker
+      if (colorPicker) {
+        colorPicker.oninput = () => {
+          const color = colorPicker.value;
+          atmManager.setEffectConfig(key, { color });
+
+          // Auto-enable if color changed while inactive
+          if (!atmManager.effects[key]?.enabled) {
+            atmManager.setEffectConfig(key, { enabled: true });
+            if (checkbox) checkbox.checked = true;
+            card.classList.add("active");
+            if (!this.motionEffectsManager.getIsPlaying()) {
+              this.motionEffectsManager.play();
+            }
+          }
+
+          updateUI();
+          this.canvasManager.mainLayer.batchDraw();
+        };
+      }
+
+      // Mode Select (e.g. hearts vs embers)
+      if (modeSelect) {
+        modeSelect.onchange = () => {
+          atmManager.setEffectConfig(key, { mode: modeSelect.value });
+          this.canvasManager.mainLayer.batchDraw();
+        };
+      }
     });
 
-    // Master opacity slider
-    if (opacitySlider && opacityVal) {
-      opacitySlider.oninput = () => {
-        const val = parseFloat(opacitySlider.value);
-        opacityVal.textContent = `${Math.round(val * 100)}%`;
+    // Master Opacity Slider
+    if (masterOpacitySlider && masterOpacityVal) {
+      masterOpacitySlider.oninput = () => {
+        const val = parseFloat(masterOpacitySlider.value);
+        masterOpacityVal.textContent = `${Math.round(val * 100)}%`;
         atmManager.setMasterOpacity(val);
         this.canvasManager.mainLayer.batchDraw();
       };
     }
 
-    // Blend composite mode select
+    // Blend Composite Mode Select
     if (blendSelect) {
       blendSelect.onchange = () => {
         atmManager.setBlendMode(blendSelect.value as GlobalCompositeOperation);
@@ -855,7 +1092,7 @@ class EsperanzaKonvaForgeApp {
         const node = await createForgeImageFromFile(file);
         this.canvasManager.addImageNode(node);
       } catch (err) {
-        alert("Could not load image file: " + String(err));
+        alert("Could not load overlay file: " + String(err));
       }
     };
 
@@ -995,6 +1232,159 @@ class EsperanzaKonvaForgeApp {
         if (glowVal) glowVal.textContent = `${node.konvaImage.shadowBlur() || 0}px`;
       }
     };
+  }
+
+  private setupSoundControls() {
+    const playPauseBtn = document.getElementById("btn-audio-play-pause");
+    const prevBtn = document.getElementById("btn-audio-prev");
+    const nextBtn = document.getElementById("btn-audio-next");
+    const loopBtn = document.getElementById("btn-audio-loop");
+    const uploadBtn = document.getElementById("btn-upload-mp3");
+    const fileInput = document.getElementById("audio-mp3-file-input") as HTMLInputElement;
+    const trackSelector = document.getElementById("audio-track-selector") as HTMLSelectElement;
+    const trackTitle = document.getElementById("audio-track-title");
+    const timeDisplay = document.getElementById("audio-time-display");
+    const progressBar = document.getElementById("audio-progress-bar");
+    const progressContainer = document.getElementById("audio-progress-container");
+    const volumeSlider = document.getElementById("audio-volume-slider") as HTMLInputElement;
+    const volumeVal = document.getElementById("audio-volume-val");
+    const statusBadge = document.getElementById("audio-status-badge");
+
+    // Play/Pause
+    playPauseBtn?.addEventListener("click", () => {
+      this.soundManager.togglePlayPause();
+    });
+
+    prevBtn?.addEventListener("click", () => {
+      this.soundManager.prevTrack();
+    });
+
+    nextBtn?.addEventListener("click", () => {
+      this.soundManager.nextTrack();
+    });
+
+    loopBtn?.addEventListener("click", () => {
+      const looping = this.soundManager.toggleLoop();
+      loopBtn.textContent = looping ? "LOOP ON" : "LOOP OFF";
+      loopBtn.classList.toggle("bg-indigo-500/20", looping);
+      loopBtn.classList.toggle("text-indigo-300", looping);
+      loopBtn.classList.toggle("text-slate-500", !looping);
+    });
+
+    // Volume
+    volumeSlider?.addEventListener("input", () => {
+      const vol = parseInt(volumeSlider.value, 10);
+      this.soundManager.setVolume(vol / 100);
+      if (volumeVal) volumeVal.textContent = `${vol}%`;
+    });
+
+    // Seek
+    progressContainer?.addEventListener("click", (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+      this.soundManager.seek(ratio);
+    });
+
+    const populateSelector = (playlist: any[]) => {
+      if (!trackSelector) return;
+      trackSelector.innerHTML = "";
+      if (playlist.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No MP3s found in /public/mp3";
+        trackSelector.appendChild(opt);
+        return;
+      }
+      for (const track of playlist) {
+        const opt = document.createElement("option");
+        opt.value = track.id;
+        opt.textContent = track.isCustom ? `${track.title} (Custom)` : track.title;
+        trackSelector.appendChild(opt);
+      }
+      const cur = this.soundManager.getCurrentTrack();
+      if (cur) {
+        trackSelector.value = cur.id;
+      }
+    };
+
+    this.soundManager.onPlaylistUpdate = (playlist) => {
+      populateSelector(playlist);
+    };
+
+    populateSelector(this.soundManager.getPlaylist());
+
+    // Rescan button (dynamically checks /public/mp3)
+    const btnRescan = document.getElementById("btn-rescan-mp3");
+    btnRescan?.addEventListener("click", async () => {
+      const icon = btnRescan.querySelector("i");
+      if (icon) icon.classList.add("animate-spin");
+      await this.soundManager.discoverMp3Files();
+      setTimeout(() => {
+        if (icon) icon.classList.remove("animate-spin");
+      }, 400);
+    });
+
+    // Open MP3 Folder button (in Electron mode)
+    const btnOpenFolder = document.getElementById("btn-open-mp3-folder");
+    const electronApi = (window as any).electronAPI;
+    if (btnOpenFolder && electronApi && electronApi.openMp3Folder) {
+      btnOpenFolder.classList.remove("hidden");
+      btnOpenFolder.addEventListener("click", () => {
+        this.soundManager.openMp3Folder();
+      });
+    }
+
+    // Upload Custom MP3
+    uploadBtn?.addEventListener("click", () => fileInput?.click());
+    fileInput?.addEventListener("change", async () => {
+      if (fileInput.files && fileInput.files.length > 0) {
+        await this.soundManager.loadCustomAudioFile(fileInput.files[0]);
+        fileInput.value = "";
+      }
+    });
+
+    // Track selector dropdown
+    trackSelector?.addEventListener("change", () => {
+      this.soundManager.selectTrackById(trackSelector.value, true);
+    });
+
+    // SoundManager event listeners
+    this.soundManager.onPlayStateChange = (isPlaying) => {
+      if (playPauseBtn) {
+        playPauseBtn.innerHTML = isPlaying
+          ? `<i data-lucide="pause" class="w-4 h-4"></i>`
+          : `<i data-lucide="play" class="w-4 h-4"></i>`;
+        createIcons({ icons: ICONS });
+      }
+      if (statusBadge) {
+        statusBadge.textContent = isPlaying ? "Playing" : "Paused";
+        statusBadge.className = isPlaying
+          ? "text-[10px] px-2 py-0.5 rounded-full font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+          : "text-[10px] px-2 py-0.5 rounded-full font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
+      }
+    };
+
+    this.soundManager.onTimeUpdate = (currentTime, duration) => {
+      if (timeDisplay) {
+        timeDisplay.textContent = `${this.soundManager.formatTime(currentTime)} / ${this.soundManager.formatTime(duration)}`;
+      }
+      if (progressBar && duration > 0) {
+        const pct = (currentTime / duration) * 100;
+        progressBar.style.width = `${pct}%`;
+      }
+    };
+
+    this.soundManager.onTrackChange = (track) => {
+      if (trackTitle) trackTitle.textContent = `${track.title} — ${track.artist}`;
+      if (trackSelector) trackSelector.value = track.id;
+    };
+
+    // Initialize display with default track
+    const current = this.soundManager.getCurrentTrack();
+    if (current && trackTitle) {
+      trackTitle.textContent = `${current.title} — ${current.artist}`;
+    }
   }
 }
 

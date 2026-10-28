@@ -41,10 +41,59 @@ export function loadImageElement(src: string): Promise<HTMLImageElement> {
   });
 }
 
+export function createForgeVideoFromFile(
+  file: File,
+  options?: Partial<ForgeImageConfig>
+): Promise<ForgeImageNode> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = "anonymous";
+
+    const onLoaded = () => {
+      video.removeEventListener("loadedmetadata", onLoaded);
+      const vw = video.videoWidth || 640;
+      const vh = video.videoHeight || 360;
+      const { w, h } = calculateInitialSize(vw, vh);
+
+      const node = new ForgeImageNode(
+        {
+          x: options?.x,
+          y: options?.y,
+          width: w,
+          height: h,
+          src: objectUrl,
+          isAnimated: true,
+          isVideo: true,
+          ...options,
+        },
+        video
+      );
+      video.play().catch((err) => console.warn("Video playback autoplay note:", err));
+      resolve(node);
+    };
+
+    video.addEventListener("loadedmetadata", onLoaded);
+    video.onerror = (err) => {
+      reject(new Error("Unable to decode MP4 / WebM video overlay: " + String(err)));
+    };
+  });
+}
+
 export async function createForgeImageFromFile(
   file: File,
   options?: Partial<ForgeImageConfig>
 ): Promise<ForgeImageNode> {
+  const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
+  if (isVideo) {
+    return createForgeVideoFromFile(file, options);
+  }
+
   const isGif = file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif");
 
   if (isGif) {

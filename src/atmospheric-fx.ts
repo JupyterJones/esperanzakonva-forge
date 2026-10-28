@@ -22,7 +22,34 @@ export type AtmosphericEffectKey =
 export interface AtmosphericEffectItemConfig {
   enabled: boolean;
   opacity: number;
+  color?: string;
+  speed?: number;
+  density?: number;
+  mode?: string;
+  count?: number;
+  text?: string;
+  glitch?: number;
   [key: string]: any;
+}
+
+export function hexToRgba(hex: string, alpha = 1): string {
+  if (!hex) return `rgba(255, 255, 255, ${alpha})`;
+  if (hex.startsWith("rgba")) {
+    return hex.replace(/[\d\.]+\)$/g, `${alpha})`);
+  }
+  if (hex.startsWith("rgb")) {
+    return hex.replace("rgb", "rgba").replace(")", `, ${alpha})`);
+  }
+  let c = hex.replace("#", "");
+  if (c.length === 3) {
+    c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(255, 255, 255, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export type AtmosphericEffectsConfig = Record<AtmosphericEffectKey, AtmosphericEffectItemConfig>;
@@ -270,19 +297,19 @@ export class AtmosphericFXManager {
   public effects: AtmosphericEffectsConfig = {
     sparkles: { enabled: false, opacity: 0.85, color: "#ffdf00", density: 45 },
     bokeh: { enabled: false, opacity: 0.55, color: "#ff66cc", count: 25 },
-    hearts: { enabled: false, opacity: 0.75, mode: "hearts", speed: 1.0 },
-    rain: { enabled: false, opacity: 0.7, speed: 1.2, count: 120 },
-    snow: { enabled: false, opacity: 0.75, count: 80 },
+    hearts: { enabled: false, opacity: 0.75, color: "#ff5a8c", mode: "hearts", speed: 1.0 },
+    rain: { enabled: false, opacity: 0.7, color: "#b4e1ff", speed: 1.2, count: 120 },
+    snow: { enabled: false, opacity: 0.75, color: "#ffffff", count: 80 },
     dust: { enabled: false, opacity: 0.7, color: "#00f0ff", count: 70 },
     beams: { enabled: false, opacity: 0.8, color: "#00f0ff" },
     hologram: { enabled: false, opacity: 0.8, color: "#00f0ff" },
     crystals: { enabled: false, opacity: 0.75, color: "#00f0ff" },
     crosshair: { enabled: false, opacity: 0.85, color: "#00ffa3" },
-    suns: { enabled: false, opacity: 0.8 },
+    suns: { enabled: false, opacity: 0.8, color: "#ffb703" },
     vhs: { enabled: false, opacity: 0.9 },
     scanlines: { enabled: false, opacity: 0.45, glitch: 0.05 },
     thermal: { enabled: false, opacity: 0.65 },
-    broadcast: { enabled: false, opacity: 0.85, text: "LIVE HOLONET FEED" },
+    broadcast: { enabled: false, opacity: 0.85, color: "#00f0ff", text: "LIVE HOLONET FEED" },
     vignette: { enabled: false, opacity: 0.5 },
     cybergrid: { enabled: false, opacity: 0.65, color: "#ff007f" },
   };
@@ -685,15 +712,15 @@ export class AtmosphericFXManager {
 
       const grad = ctx.createRadialGradient(px, py, rad * 0.1, px, py, rad);
       grad.addColorStop(0, baseColor);
-      grad.addColorStop(0.7, `${baseColor}44`);
-      grad.addColorStop(1, `${baseColor}00`);
+      grad.addColorStop(0.7, hexToRgba(baseColor, 0.27));
+      grad.addColorStop(1, hexToRgba(baseColor, 0));
 
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(px, py, rad, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = `${baseColor}88`;
+      ctx.strokeStyle = hexToRgba(baseColor, 0.53);
       ctx.lineWidth = 1.2 * scale;
       ctx.beginPath();
       ctx.arc(px, py, rad * 0.85, 0, Math.PI * 2);
@@ -710,6 +737,7 @@ export class AtmosphericFXManager {
     ctx.save();
     ctx.globalAlpha = opacity;
     const isEmbers = conf.mode === "embers";
+    const color = conf.color || (isEmbers ? "#ff9900" : "#ff5a8c");
 
     for (const p of this.heartsPool) {
       p.y += p.vy * (conf.speed || 1.0);
@@ -731,14 +759,14 @@ export class AtmosphericFXManager {
       if (isEmbers) {
         const grad = ctx.createRadialGradient(0, 0, 1, 0, 0, s);
         grad.addColorStop(0, "#ffffff");
-        grad.addColorStop(0.4, "#ff9900");
-        grad.addColorStop(1, "rgba(255, 50, 0, 0)");
+        grad.addColorStop(0.4, color);
+        grad.addColorStop(1, hexToRgba(color, 0));
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(0, 0, s, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        ctx.fillStyle = "rgba(255, 90, 140, 0.85)";
+        ctx.fillStyle = hexToRgba(color, 0.85);
         ctx.beginPath();
         ctx.moveTo(0, s * 0.3);
         ctx.bezierCurveTo(-s * 0.5, -s * 0.3, -s, s * 0.2, 0, s * 0.9);
@@ -759,7 +787,8 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
-    ctx.strokeStyle = "rgba(180, 225, 255, 0.65)";
+    const color = conf.color || "#b4e1ff";
+    ctx.strokeStyle = hexToRgba(color, 0.65);
     ctx.lineWidth = 1.2 * scale;
 
     const speed = conf.speed || 1.2;
@@ -782,7 +811,7 @@ export class AtmosphericFXManager {
       ctx.stroke();
 
       if (p.y > 0.92) {
-        ctx.strokeStyle = "rgba(180, 225, 255, 0.3)";
+        ctx.strokeStyle = hexToRgba(color, 0.3);
         ctx.beginPath();
         ctx.ellipse(px, h * 0.98, 8 * scale, 3 * scale, 0, 0, Math.PI * 2);
         ctx.stroke();
@@ -798,7 +827,7 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = conf.color || "#ffffff";
 
     for (const p of this.snowPool) {
       p.y += p.vy;
@@ -856,6 +885,7 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
+    const color = conf.color || "#00f0ff";
     const cx = w * 0.5;
     const cy = h * 0.32;
 
@@ -868,9 +898,9 @@ export class AtmosphericFXManager {
 
     [leftEye, rightEye].forEach((eye) => {
       const grad = ctx.createRadialGradient(eye.x, eye.y, 1, eye.x, eye.y, 50 * scale);
-      grad.addColorStop(0, `rgba(0, 240, 255, ${0.9 * eyeIntensity})`);
-      grad.addColorStop(0.3, `rgba(255, 183, 3, ${0.6 * eyeIntensity})`);
-      grad.addColorStop(1, "rgba(0, 240, 255, 0)");
+      grad.addColorStop(0, hexToRgba(color, 0.9 * eyeIntensity));
+      grad.addColorStop(0.3, hexToRgba("#ffb703", 0.6 * eyeIntensity));
+      grad.addColorStop(1, hexToRgba(color, 0));
 
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -884,9 +914,9 @@ export class AtmosphericFXManager {
     ctx.rotate(sweepAngle);
 
     const beamGrad = ctx.createLinearGradient(0, 0, 0, h * 0.75);
-    beamGrad.addColorStop(0, "rgba(0, 240, 255, 0.45)");
-    beamGrad.addColorStop(0.5, "rgba(0, 240, 255, 0.15)");
-    beamGrad.addColorStop(1, "rgba(0, 240, 255, 0)");
+    beamGrad.addColorStop(0, hexToRgba(color, 0.45));
+    beamGrad.addColorStop(0.5, hexToRgba(color, 0.15));
+    beamGrad.addColorStop(1, hexToRgba(color, 0));
 
     ctx.fillStyle = beamGrad;
     ctx.beginPath();
@@ -916,6 +946,7 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
+    const color = conf.color || "#00f0ff";
     const cx = w * 0.7;
     const cy = h * 0.38;
 
@@ -929,7 +960,7 @@ export class AtmosphericFXManager {
 
       ctx.save();
       ctx.rotate(rot);
-      ctx.strokeStyle = `rgba(0, 240, 255, ${0.45 / r + Math.sin(this.time * 3) * 0.15})`;
+      ctx.strokeStyle = hexToRgba(color, 0.45 / r + Math.sin(this.time * 3) * 0.15);
       ctx.lineWidth = 1.5 * scale;
       ctx.setLineDash([5 * scale, 5 * scale]);
       ctx.beginPath();
@@ -948,7 +979,7 @@ export class AtmosphericFXManager {
     ctx.setLineDash([]);
     const fontSize = Math.max(10, Math.round(11 * scale));
     ctx.font = `${fontSize}px "Space Grotesk", monospace`;
-    ctx.fillStyle = "rgba(0, 240, 255, 0.85)";
+    ctx.fillStyle = hexToRgba(color, 0.85);
     const equations = [
       `∇ × B = μ₀J + μ₀ε₀(∂E/∂t)`,
       `Ψ(r,t) = Ae^(i(k·r - ωt))`,
@@ -971,26 +1002,27 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
+    const color = conf.color || "#00f0ff";
 
     const nodes = [
-      { x: w * 0.2, y: h * 0.65, size: 75 * scale, color: "rgba(0, 240, 255," },
-      { x: w * 0.78, y: h * 0.72, size: 90 * scale, color: "rgba(191, 85, 236," },
-      { x: w * 0.5, y: h * 0.22, size: 65 * scale, color: "rgba(0, 255, 163," },
+      { x: w * 0.2, y: h * 0.65, size: 75 * scale, color: color },
+      { x: w * 0.78, y: h * 0.72, size: 90 * scale, color: "#bf55ec" },
+      { x: w * 0.5, y: h * 0.22, size: 65 * scale, color: "#00ffa3" },
     ];
 
     nodes.forEach((node) => {
       const pulse = 0.5 + Math.sin(this.time * 2.5 + node.x) * 0.35;
       const grad = ctx.createRadialGradient(node.x, node.y, 5 * scale, node.x, node.y, node.size);
-      grad.addColorStop(0, `${node.color}${0.8 * pulse})`);
-      grad.addColorStop(0.7, `${node.color}${0.2 * pulse})`);
-      grad.addColorStop(1, `${node.color}0)`);
+      grad.addColorStop(0, hexToRgba(node.color, 0.8 * pulse));
+      grad.addColorStop(0.7, hexToRgba(node.color, 0.2 * pulse));
+      grad.addColorStop(1, hexToRgba(node.color, 0));
 
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = `${node.color}${0.6 * pulse})`;
+      ctx.strokeStyle = hexToRgba(node.color, 0.6 * pulse);
       ctx.lineWidth = 1.5 * scale;
       ctx.setLineDash([6 * scale, 4 * scale]);
       ctx.beginPath();
@@ -1046,6 +1078,7 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
+    const color = conf.color || "#ffb703";
 
     const sun1 = { x: w * 0.18, y: h * 0.18, r: 35 * scale };
     const sun2 = { x: w * 0.28, y: h * 0.13, r: 26 * scale };
@@ -1054,9 +1087,9 @@ export class AtmosphericFXManager {
       const pulse = 1 + Math.sin(this.time * 3 + sun.x) * 0.1;
       const grad = ctx.createRadialGradient(sun.x, sun.y, 4 * scale, sun.x, sun.y, sun.r * 2.5 * pulse);
       grad.addColorStop(0, "#ffffff");
-      grad.addColorStop(0.3, "#ffb703");
-      grad.addColorStop(0.7, "rgba(255, 85, 0, 0.4)");
-      grad.addColorStop(1, "rgba(255, 50, 0, 0)");
+      grad.addColorStop(0.3, color);
+      grad.addColorStop(0.7, hexToRgba(color, 0.4));
+      grad.addColorStop(1, hexToRgba(color, 0));
 
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -1070,7 +1103,7 @@ export class AtmosphericFXManager {
     const targetY = h * 0.72;
 
     const beamAlpha = 0.5 + Math.sin(this.time * 5) * 0.3;
-    ctx.strokeStyle = `rgba(0, 240, 255, ${beamAlpha})`;
+    ctx.strokeStyle = hexToRgba(color, beamAlpha);
     ctx.lineWidth = 2 * scale;
     ctx.beginPath();
     ctx.moveTo(satX, satY);
@@ -1174,6 +1207,7 @@ export class AtmosphericFXManager {
 
     ctx.save();
     ctx.globalAlpha = opacity;
+    const color = conf.color || "#00f0ff";
 
     const livePulse = Math.sin(this.time * 4) > 0;
     ctx.fillStyle = livePulse ? "#ff3366" : "rgba(255, 51, 102, 0.4)";
@@ -1188,12 +1222,12 @@ export class AtmosphericFXManager {
 
     const text = conf.text || "STAACOR HOLONET // ARCHIVE";
     ctx.font = `700 ${Math.max(9, Math.round(11 * scale))}px monospace`;
-    ctx.fillStyle = "#00f0ff";
+    ctx.fillStyle = color;
     ctx.textAlign = "right";
     ctx.fillText(text, w - 30 * scale, 36 * scale);
     ctx.textAlign = "left";
 
-    ctx.strokeStyle = "rgba(0, 240, 255, 0.5)";
+    ctx.strokeStyle = hexToRgba(color, 0.5);
     ctx.lineWidth = 1.5 * scale;
     const margin = 24 * scale;
     const len = 28 * scale;
@@ -1257,12 +1291,23 @@ export class AtmosphericFXManager {
     ctx.globalAlpha = opacity;
     const color = conf.color || "#ff007f";
     const horizon = h * 0.65;
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.2 * scale;
-
     const vpX = w * 0.5;
     const vpY = horizon;
+
+    // Horizon aura glow reacting to custom color
+    const auraGrad = ctx.createRadialGradient(vpX, vpY, 4 * scale, vpX, vpY, w * 0.5);
+    auraGrad.addColorStop(0, hexToRgba(color, 0.35));
+    auraGrad.addColorStop(0.5, hexToRgba(color, 0.1));
+    auraGrad.addColorStop(1, hexToRgba(color, 0));
+    ctx.fillStyle = auraGrad;
+    ctx.fillRect(0, horizon - 15 * scale, w, h - horizon + 15 * scale);
+
+    // Grid lines with neon glow
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.3 * scale;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6 * scale;
+
     const count = 16;
     for (let i = -count; i <= count; i++) {
       const bottomX = vpX + i * (w / count) * 1.5;
@@ -1283,6 +1328,7 @@ export class AtmosphericFXManager {
       }
     }
 
+    ctx.shadowBlur = 0;
     ctx.restore();
   }
 

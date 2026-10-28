@@ -12,3 +12,22 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .vite
+
+# Added by fix_git.py
+*.db
+*.sqlite
+*.sqlite3
+venv/
+.env
+.env.*
+secrets.json
+config.json
+*.pem
+*.key
+*.crt
+*.bak
+*.old
+*.swp
+*.tmp
+Thumbs.db
+*.mp4

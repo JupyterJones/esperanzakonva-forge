@@ -30,12 +30,31 @@ export class ToolbarController {
   }
 
   public updateUI(state: FormattingState | null, node: RichTextNode | null) {
-    const hasSelection = state !== null && node !== null;
+    const selectedNode = this.canvasManager.getSelectedNode();
+    const hasAnySelection = selectedNode !== null;
+    const hasTextSelection = state !== null && node !== null;
 
-    // Toggle controls availability
-    const controls = document.querySelectorAll<HTMLElement>("[data-requires-selection]");
-    controls.forEach((el) => {
-      if (hasSelection) {
+    // Controls that operate on ANY selected object on the canvas (Text OR Stickers/Images/Videos):
+    // Delete Box/Element, Duplicate, Bring Forward, Send Backward
+    const objectControls = document.querySelectorAll<HTMLElement>(
+      "#btn-delete, #btn-duplicate, #btn-bring-forward, #btn-send-backward"
+    );
+    objectControls.forEach((el) => {
+      if (hasAnySelection) {
+        el.removeAttribute("disabled");
+        el.classList.remove("opacity-40", "pointer-events-none");
+      } else {
+        el.setAttribute("disabled", "true");
+        el.classList.add("opacity-40", "pointer-events-none");
+      }
+    });
+
+    // Controls that operate ONLY on Rich Text (fonts, weights, formatting, alignment, lists):
+    const textControls = document.querySelectorAll<HTMLElement>(
+      "[data-requires-selection]:not(#btn-delete):not(#btn-duplicate):not(#btn-bring-forward):not(#btn-send-backward)"
+    );
+    textControls.forEach((el) => {
+      if (hasTextSelection) {
         el.removeAttribute("disabled");
         el.classList.remove("opacity-40", "pointer-events-none");
       } else {
@@ -59,10 +78,17 @@ export class ToolbarController {
     const redoBtn = this.byId<HTMLButtonElement>("btn-redo");
     const selectionInfo = this.byId<HTMLSpanElement>("selection-info");
 
+    undoBtn.disabled = !this.canvasManager.canUndo();
+    redoBtn.disabled = !this.canvasManager.canRedo();
+
     const alignButtons = document.querySelectorAll<HTMLButtonElement>("[data-align]");
     alignButtons.forEach((btn) => {
-      btn.classList.toggle("active", hasSelection && btn.dataset.align === state?.alignment);
+      btn.classList.toggle("active", hasTextSelection && btn.dataset.align === state?.alignment);
     });
+
+    if (hasAnySelection && !hasTextSelection) {
+      selectionInfo.textContent = "Graphic Selected • Press Delete to remove";
+    }
 
     // Inspector
     const strokeWidth = this.byId<HTMLInputElement>("stroke-width");
@@ -95,9 +121,6 @@ export class ToolbarController {
     const gradColor2 = this.byId<HTMLInputElement>("grad-color-2");
     const gradAngle = this.byId<HTMLInputElement>("grad-angle");
     const gradAngleVal = this.byId<HTMLSpanElement>("grad-angle-val");
-
-    undoBtn.disabled = !state?.canUndo;
-    redoBtn.disabled = !state?.canRedo;
 
     if (!state || !node) {
       selectionInfo.textContent = "Ready • Click any element to edit";
@@ -541,9 +564,13 @@ export class ToolbarController {
         } else if (key === "y") {
           e.preventDefault();
           this.canvasManager.redo();
+        } else if (key === "s") {
+          e.preventDefault();
+          const btn = document.getElementById("btn-save-project-direct");
+          if (btn) btn.click();
         }
       } else if (e.key === "Delete" || e.key === "Backspace") {
-        if (this.canvasManager.getSelected() && !this.canvasManager.isEditing()) {
+        if (this.canvasManager.getSelectedNode() && !this.canvasManager.isEditing()) {
           e.preventDefault();
           this.canvasManager.deleteSelected();
         }

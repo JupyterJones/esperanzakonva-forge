@@ -60,21 +60,16 @@
         <span>Shortcuts</span>
       </button>
 
-      <button id="btn-clear-canvas" class="header-btn hover:text-red-400" title="Clear Canvas">
-        <i data-lucide="trash-2" class="w-4 h-4"></i>
-        <span>Clear</span>
-      </button>
-
       <button id="btn-animated-fx-menu" class="header-btn text-orange-400 hover:text-orange-300 hover:border-orange-500/40" title="Video Motion & Special Animated Effects">
         <i data-lucide="clapperboard" class="w-4 h-4 text-orange-400"></i>
         <span>Animated FX</span>
       </button>
 
-      <button id="btn-add-media-header" class="header-btn text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/40" title="Apply Transparent PNG or Animated GIF Overlay">
-        <i data-lucide="image" class="w-4 h-4 text-emerald-400"></i>
-        <span>+ PNG / GIF</span>
+      <button id="btn-add-media-header" class="header-btn text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/40" title="Apply Transparent PNG, Animated GIF, or MP4 Video Overlay">
+        <i data-lucide="layers" class="w-4 h-4 text-emerald-400"></i>
+        <span>+ OverLays</span>
       </button>
-      <input type="file" id="media-file-input" accept="image/png,image/gif,image/webp,image/svg+xml,image/jpeg" class="hidden" />
+      <input type="file" id="media-file-input" accept="image/png,image/gif,image/webp,image/svg+xml,image/jpeg,video/mp4,video/webm" class="hidden" />
 
       <a
         id="link-konvajs-site"
@@ -91,15 +86,26 @@
 
     <!-- Right Actions -->
     <div class="flex items-center gap-3">
-      <!-- Undo / Redo -->
-      <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
-        <button id="btn-undo" class="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Undo (Ctrl+Z)">
-          <i data-lucide="undo-2" class="w-4 h-4"></i>
-        </button>
-        <button id="btn-redo" class="p-1.5 rounded hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors" title="Redo (Ctrl+Shift+Z)">
-          <i data-lucide="redo-2" class="w-4 h-4"></i>
-        </button>
-      </div>
+      <!-- Direct Save Project JSON Button -->
+      <button
+        id="btn-save-project-direct"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 font-semibold text-xs rounded-lg border border-amber-500/30 hover:border-amber-500/50 transition-all cursor-pointer shadow-sm"
+        title="Save Project JSON to Disk (Ctrl + S)"
+      >
+        <i data-lucide="save" class="w-4 h-4 text-amber-400"></i>
+        <span>Save Project</span>
+      </button>
+
+      <!-- Load Project JSON Button -->
+      <button
+        id="btn-load-project-direct"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-slate-300 font-semibold text-xs rounded-lg border border-slate-800 hover:border-slate-700 transition-all cursor-pointer"
+        title="Load Saved Project JSON File"
+      >
+        <i data-lucide="folder-open" class="w-4 h-4 text-cyan-400"></i>
+        <span>Load Project</span>
+      </button>
+      <input type="file" id="load-project-file-input" accept=".json,application/json" class="hidden" />
 
       <!-- Open Projects Folder (Electron AppImage Mode) -->
       <button
@@ -195,6 +201,22 @@
         </button>
       </div>
 
+      <!-- Undo / Redo -->
+      <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+        <button id="btn-undo" class="toolbar-btn disabled:opacity-30 disabled:pointer-events-none" title="Undo (Ctrl+Z)">
+          <i data-lucide="undo-2" class="w-3.5 h-3.5"></i>
+        </button>
+        <button id="btn-redo" class="toolbar-btn disabled:opacity-30 disabled:pointer-events-none" title="Redo (Ctrl+Shift+Z)">
+          <i data-lucide="redo-2" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
+      <!-- Clear Canvas -->
+      <button id="btn-clear-canvas" class="toolbar-btn text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-1 px-2 text-xs font-semibold" title="Clear Canvas">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        <span>Clear</span>
+      </button>
+
       <!-- Lists -->
       <div class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
         <button id="btn-bullets" data-requires-selection class="toolbar-btn" title="Bulleted List">
@@ -238,9 +260,9 @@
   <div class="flex-1 flex overflow-hidden">
 
     <!-- LEFT SIDEBAR: Library, Presets, Templates, FX -->
-    <aside id="left-sidebar" class="w-80 bg-slate-950 border-r border-slate-800/80 flex flex-col z-10 flex-shrink-0">
+    <aside id="left-sidebar" class="bg-slate-950 border-r border-slate-800/80 flex flex-col z-10 flex-shrink-0">
       <!-- Tabs Header -->
-      <div class="flex border-b border-slate-800 bg-slate-900/50 p-1 gap-1">
+      <div class="flex border-b border-slate-800 bg-slate-900/50 p-1.5 gap-1 overflow-x-auto no-scrollbar">
         <button data-tab-target="elements" class="sidebar-tab active">
           <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
           <span>Elements</span>
@@ -258,8 +280,8 @@
           <span>Animated FX</span>
         </button>
         <button data-tab-target="media" class="sidebar-tab">
-          <i data-lucide="image" class="w-3.5 h-3.5 text-emerald-400"></i>
-          <span>PNG & GIF</span>
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>OverLays</span>
         </button>
       </div>
 
@@ -337,14 +359,9 @@
 
         <!-- TAB 4: ANIMATED FX (VIDEO & MOTION EFFECTS) -->
         <div data-tab-pane="fx" class="hidden space-y-4">
-          <div>
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-orange-400">Animated FX & Video</h3>
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#1A1208] border border-orange-500/40 text-orange-300">60 FPS</span>
-            </div>
-            <p class="text-xs text-slate-400 leading-relaxed mt-1">
-              Real-time kinetic motion & video special effects. Record and export transparent video clips for Premiere, DaVinci & CapCut.
-            </p>
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-orange-400">Animated FX & Video</h3>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#1A1208] border border-orange-500/40 text-orange-300">60 FPS</span>
           </div>
 
           <!-- Master Motion Playback Deck -->
@@ -381,139 +398,71 @@
             </div>
           </div>
 
-          <!-- Motion Presets Grid -->
+          <!-- Motion Presets Grid (Compact Chip Buttons) -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Video Motion Presets</h4>
-              <span class="text-[10px] text-orange-400/80 font-mono">Stackable (Click to Toggle)</span>
+              <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Typography Motion</h4>
+              <span class="text-[10px] text-orange-400/80 font-mono">Stackable</span>
             </div>
-            <div class="grid grid-cols-1 gap-2">
-              <button data-motion-preset="neon-pulse" class="motion-preset-btn active">
-                <div class="preset-icon">
-                  <i data-lucide="sparkles" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="preset-title">Cyber Neon Pulse</div>
-                  <div class="preset-desc">Rhythmic glowing aura and breathing color luminosity</div>
-                </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button data-motion-preset="neon-pulse" class="motion-preset-chip active">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>Neon Pulse</span>
               </button>
-
-              <button data-motion-preset="molten-shimmer" class="motion-preset-btn">
-                <div class="preset-icon">
-                  <i data-lucide="flame" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="preset-title">Molten Shimmer Beam</div>
-                  <div class="preset-desc">Dynamic metallic light streak sweeping across typography</div>
-                </div>
+              <button data-motion-preset="molten-shimmer" class="motion-preset-chip">
+                <i data-lucide="flame" class="w-3.5 h-3.5 text-orange-400"></i>
+                <span>Molten Shimmer</span>
               </button>
-
-              <button data-motion-preset="typewriter" class="motion-preset-btn">
-                <div class="preset-icon">
-                  <i data-lucide="keyboard" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="preset-title">Typewriter Title Reveal</div>
-                  <div class="preset-desc">Sequential character typing with live glowing amber cursor</div>
-                </div>
+              <button data-motion-preset="typewriter" class="motion-preset-chip">
+                <i data-lucide="keyboard" class="w-3.5 h-3.5 text-amber-400"></i>
+                <span>Typewriter</span>
               </button>
-
-              <button data-motion-preset="float-breathe" class="motion-preset-btn">
-                <div class="preset-icon">
-                  <i data-lucide="minimize-2" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="preset-title">Kinetic Float & Breathe</div>
-                  <div class="preset-desc">Harmonic organic bobbing for YouTube, Reels & video titles</div>
-                </div>
+              <button data-motion-preset="float-breathe" class="motion-preset-chip">
+                <i data-lucide="minimize-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Float & Breathe</span>
               </button>
-
-              <button data-motion-preset="cyber-glitch" class="motion-preset-btn">
-                <div class="preset-icon">
-                  <i data-lucide="code" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="preset-title">Cyber Glitch Jitter</div>
-                  <div class="preset-desc">Digital chromatic twitch and jitter for tech/gaming edits</div>
-                </div>
+              <button data-motion-preset="cyber-glitch" class="motion-preset-chip">
+                <i data-lucide="code" class="w-3.5 h-3.5 text-purple-400"></i>
+                <span>Cyber Glitch</span>
               </button>
-
-              <button data-motion-preset="wave-dance" class="motion-preset-btn">
-                <div class="preset-icon">
-                  <i data-lucide="sliders" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div class="preset-title">Harmonic Wave Dance</div>
-                  <div class="preset-desc">Oscillating curved arc sine wave pulse</div>
-                </div>
+              <button data-motion-preset="wave-dance" class="motion-preset-chip">
+                <i data-lucide="sliders" class="w-3.5 h-3.5 text-sky-400"></i>
+                <span>Wave Dance</span>
               </button>
-
-              <button data-motion-preset="none" class="motion-preset-btn">
-                <div class="preset-icon">
-                  <span class="text-xs">⏹</span>
-                </div>
-                <div>
-                  <div class="preset-title">Reset / Static Text</div>
-                  <div class="preset-desc">Halt motion and restore fixed typography</div>
-                </div>
+              <button data-motion-preset="none" class="motion-preset-chip col-span-2 justify-center">
+                <span>⏹ Static Typography</span>
               </button>
             </div>
           </div>
 
-          <!-- Atmospheric Scene FX Deck (17 Effects from /effects/) -->
+          <!-- Atmospheric Presets & Master Deck -->
           <div class="fx-section-card space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-1.5">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i>
-                <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-300">Atmospheric Scene Overlays</h4>
+                <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-300">Atmospheric Presets</h4>
               </div>
               <span id="atm-active-badge" class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#1A1208] border border-amber-500/40 text-amber-300">0 ACTIVE</span>
             </div>
-            <p class="text-[11px] text-slate-400 leading-relaxed">
-              17 procedural canvas visual effects. Plays at 60 FPS and bakes directly into exported transparent WebM video.
-            </p>
 
-            <!-- Curated Atmospheric Presets -->
-            <div>
-              <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1.5">Curated Atmospheric Presets</span>
-              <div class="grid grid-cols-3 gap-1.5">
-                <button data-atm-preset="golden_sparkles" class="atm-preset-btn">
-                  <span>✨ Sparkles</span>
-                </button>
-                <button data-atm-preset="retro_vhs_1994" class="atm-preset-btn">
-                  <span>📼 VHS 1994</span>
-                </button>
-                <button data-atm-preset="rainy_noir" class="atm-preset-btn">
-                  <span>🌧️ Rain Noir</span>
-                </button>
-                <button data-atm-preset="cyber_synthwave" class="atm-preset-btn">
-                  <span>🌐 Cyber Grid</span>
-                </button>
-                <button data-atm-preset="orbital_hologram" class="atm-preset-btn">
-                  <span>🪐 Hologram</span>
-                </button>
-                <button data-atm-preset="staacor_sentinel" class="atm-preset-btn">
-                  <span>⚡ Sentinel</span>
-                </button>
-                <button data-atm-preset="winter_snowfall" class="atm-preset-btn">
-                  <span>❄️ Snowfall</span>
-                </button>
-                <button data-atm-preset="dreamy_hearts" class="atm-preset-btn">
-                  <span>💖 Hearts</span>
-                </button>
-                <button data-atm-preset="recon_drone_lock" class="atm-preset-btn">
-                  <span>🎯 Drone Lock</span>
-                </button>
-                <button data-atm-preset="bioluminescent_crystals" class="atm-preset-btn">
-                  <span>💎 Crystals</span>
-                </button>
-                <button data-atm-preset="thermal_recon" class="atm-preset-btn">
-                  <span>🌡️ Thermal</span>
-                </button>
-                <button data-atm-preset="clean_slate" class="atm-preset-btn text-slate-400 hover:text-slate-200">
-                  <span>🚫 No FX</span>
-                </button>
-              </div>
+            <!-- Preset Dropdown & Clear -->
+            <div class="flex items-center gap-2">
+              <select id="atm-preset-selector" class="flex-1 bg-slate-900 border border-slate-800 text-xs text-slate-200 rounded px-2.5 py-1.5 outline-none focus:border-orange-500">
+                <option value="">-- Choose Atmospheric Preset --</option>
+                <option value="golden_sparkles">✨ Golden Sparkles</option>
+                <option value="staacor_sentinel">⚡ Staacor Sentinel</option>
+                <option value="retro_vhs_1994">📼 Retro VHS 1994</option>
+                <option value="orbital_hologram">🪐 Orbital Hologram</option>
+                <option value="bioluminescent_crystals">💎 Bioluminescent Crystals</option>
+                <option value="recon_drone_lock">🎯 Recon Drone Lock</option>
+                <option value="rainy_noir">🌧️ Rainy Noir</option>
+                <option value="cyber_synthwave">🌐 Cyber Synthwave Grid</option>
+                <option value="dreamy_hearts">💖 Dreamy Hearts & Embers</option>
+                <option value="winter_snowfall">❄️ Winter Snowfall</option>
+                <option value="thermal_recon">🌡️ Thermal Recon</option>
+                <option value="clean_slate">🚫 Clean Slate (No FX)</option>
+              </select>
+              <button id="btn-clear-atm-fx" class="btn btn-outline text-xs px-2.5 py-1.5" title="Clear all effects">Clear</button>
             </div>
 
             <!-- Master FX Controls: Opacity & Blend Mode -->
@@ -537,81 +486,307 @@
                 </select>
               </div>
             </div>
+          </div>
 
-            <!-- Individual 17 Effects Toggle Matrix -->
-            <div class="pt-2 border-t border-slate-800/80">
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[10px] uppercase font-bold text-slate-400">Custom Layer Matrix (17 Effects)</span>
+          <!-- Granular Effects Palette Deck (Modeled after /effects/) -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="palette" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <span>Effects Palette (Colors & Opacity)</span>
+              </h4>
+            </div>
+
+            <!-- Group 1: Ambient & Particles -->
+            <div class="space-y-1.5">
+              <span class="text-[10px] uppercase font-bold text-slate-500 block">Ambient & Particles</span>
+
+              <!-- 1. Sparkles -->
+              <div class="effect-item" id="effect-sparkles" data-effect-key="sparkles">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="sparkles">
+                    <span class="effect-title">✨ Sparkles & Glitter</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="sparkles" value="#ffdf00" title="Sparkle Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="sparkles" min="0" max="100" value="85">
+                  <span class="effect-opacity-val" data-effect-val="sparkles">85%</span>
+                </div>
               </div>
-              <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-                <button data-atm-effect="sparkles" class="atm-effect-toggle">
-                  <span>✨ Sparkles</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="bokeh" class="atm-effect-toggle">
-                  <span>🔮 Bokeh Orbs</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="hearts" class="atm-effect-toggle">
-                  <span>💖 Hearts / Embers</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="rain" class="atm-effect-toggle">
-                  <span>🌧️ Rain & Ripples</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="snow" class="atm-effect-toggle">
-                  <span>❄️ Snowfall</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="dust" class="atm-effect-toggle">
-                  <span>🌌 Cosmic Dust</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="beams" class="atm-effect-toggle">
-                  <span>🔦 Search Beams</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="hologram" class="atm-effect-toggle">
-                  <span>🪐 Hologram Rings</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="crystals" class="atm-effect-toggle">
-                  <span>💎 Crystal Shield</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="crosshair" class="atm-effect-toggle">
-                  <span>🎯 Drone Reticle</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="suns" class="atm-effect-toggle">
-                  <span>☀️ Celestial Suns</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="vhs" class="atm-effect-toggle">
-                  <span>📼 Retro VHS OSD</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="scanlines" class="atm-effect-toggle">
-                  <span>📺 CRT Scanlines</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="thermal" class="atm-effect-toggle">
-                  <span>🌡️ Thermal Sensor</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="broadcast" class="atm-effect-toggle">
-                  <span>📡 Broadcast HUD</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="vignette" class="atm-effect-toggle">
-                  <span>🎬 Vignette</span>
-                  <span class="atm-dot"></span>
-                </button>
-                <button data-atm-effect="cybergrid" class="atm-effect-toggle col-span-2">
-                  <span>🌐 3D Perspective Synthwave Grid</span>
-                  <span class="atm-dot"></span>
-                </button>
+
+              <!-- 2. Bokeh -->
+              <div class="effect-item" id="effect-bokeh" data-effect-key="bokeh">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="bokeh">
+                    <span class="effect-title">🔮 Soft Dreamy Bokeh</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="bokeh" value="#ff66cc" title="Bokeh Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="bokeh" min="0" max="100" value="55">
+                  <span class="effect-opacity-val" data-effect-val="bokeh">55%</span>
+                </div>
+              </div>
+
+              <!-- 3. Hearts & Embers -->
+              <div class="effect-item" id="effect-hearts" data-effect-key="hearts">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="hearts">
+                    <span class="effect-title">💖 Hearts & Embers</span>
+                  </label>
+                  <div class="flex items-center gap-1.5">
+                    <select data-effect-mode="hearts" class="bg-slate-900 border border-slate-700 text-[10px] text-slate-300 rounded px-1.5 py-0.5 outline-none">
+                      <option value="hearts" selected>Hearts</option>
+                      <option value="embers">Embers</option>
+                    </select>
+                    <input type="color" class="color-picker-swatch" data-effect-color="hearts" value="#ff5a8c" title="Color">
+                  </div>
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="hearts" min="0" max="100" value="75">
+                  <span class="effect-opacity-val" data-effect-val="hearts">75%</span>
+                </div>
+              </div>
+
+              <!-- 4. Rain -->
+              <div class="effect-item" id="effect-rain" data-effect-key="rain">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="rain">
+                    <span class="effect-title">🌧️ Atmospheric Rain</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="rain" value="#b4e1ff" title="Rain Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="rain" min="0" max="100" value="70">
+                  <span class="effect-opacity-val" data-effect-val="rain">70%</span>
+                </div>
+              </div>
+
+              <!-- 5. Snow -->
+              <div class="effect-item" id="effect-snow" data-effect-key="snow">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="snow">
+                    <span class="effect-title">❄️ Winter Snowfall</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="snow" value="#ffffff" title="Snow Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="snow" min="0" max="100" value="75">
+                  <span class="effect-opacity-val" data-effect-val="snow">75%</span>
+                </div>
+              </div>
+
+              <!-- 6. Dust -->
+              <div class="effect-item" id="effect-dust" data-effect-key="dust">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="dust">
+                    <span class="effect-title">🌌 Cosmic Dust Motes</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="dust" value="#00f0ff" title="Dust Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="dust" min="0" max="100" value="70">
+                  <span class="effect-opacity-val" data-effect-val="dust">70%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 2: Sci-Fi & Cybernetics -->
+            <div class="space-y-1.5 pt-1">
+              <span class="text-[10px] uppercase font-bold text-slate-500 block">Sci-Fi & Cybernetics</span>
+
+              <!-- 7. Beams -->
+              <div class="effect-item" id="effect-beams" data-effect-key="beams">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="beams">
+                    <span class="effect-title">🔦 Sweeping Light Beams</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="beams" value="#00f0ff" title="Beam Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="beams" min="0" max="100" value="80">
+                  <span class="effect-opacity-val" data-effect-val="beams">80%</span>
+                </div>
+              </div>
+
+              <!-- 8. Hologram -->
+              <div class="effect-item" id="effect-hologram" data-effect-key="hologram">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="hologram">
+                    <span class="effect-title">🪐 Holographic 3D Rings</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="hologram" value="#00f0ff" title="Holo Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="hologram" min="0" max="100" value="80">
+                  <span class="effect-opacity-val" data-effect-val="hologram">80%</span>
+                </div>
+              </div>
+
+              <!-- 9. Crystals -->
+              <div class="effect-item" id="effect-crystals" data-effect-key="crystals">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="crystals">
+                    <span class="effect-title">💎 Bioluminescent Nodes</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="crystals" value="#00f0ff" title="Crystal Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="crystals" min="0" max="100" value="75">
+                  <span class="effect-opacity-val" data-effect-val="crystals">75%</span>
+                </div>
+              </div>
+
+              <!-- 10. Crosshair -->
+              <div class="effect-item" id="effect-crosshair" data-effect-key="crosshair">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="crosshair">
+                    <span class="effect-title">🎯 Recon Drone Reticle</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="crosshair" value="#00ffa3" title="Reticle Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="crosshair" min="0" max="100" value="85">
+                  <span class="effect-opacity-val" data-effect-val="crosshair">85%</span>
+                </div>
+              </div>
+
+              <!-- 11. Suns -->
+              <div class="effect-item" id="effect-suns" data-effect-key="suns">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="suns">
+                    <span class="effect-title">☀️ Twin Celestial Suns</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="suns" value="#ffb703" title="Sun Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="suns" min="0" max="100" value="80">
+                  <span class="effect-opacity-val" data-effect-val="suns">80%</span>
+                </div>
+              </div>
+
+              <!-- 12. Cybergrid -->
+              <div class="effect-item" id="effect-cybergrid" data-effect-key="cybergrid">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="cybergrid">
+                    <span class="effect-title">🌐 3D Cyber Synth Grid</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="cybergrid" value="#ff007f" title="Grid Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="cybergrid" min="0" max="100" value="65">
+                  <span class="effect-opacity-val" data-effect-val="cybergrid">65%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Group 3: Screen & Optics -->
+            <div class="space-y-1.5 pt-1">
+              <span class="text-[10px] uppercase font-bold text-slate-500 block">Screen & Optics</span>
+
+              <!-- 13. Retro VHS -->
+              <div class="effect-item" id="effect-vhs" data-effect-key="vhs">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="vhs">
+                    <span class="effect-title">📼 Retro VHS Camcorder 1994</span>
+                  </label>
+                  <span class="effect-tag">Vintage</span>
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="vhs" min="0" max="100" value="90">
+                  <span class="effect-opacity-val" data-effect-val="vhs">90%</span>
+                </div>
+              </div>
+
+              <!-- 14. Scanlines -->
+              <div class="effect-item" id="effect-scanlines" data-effect-key="scanlines">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="scanlines">
+                    <span class="effect-title">📺 CRT Scanlines & Glitch</span>
+                  </label>
+                  <span class="effect-tag">Cyber</span>
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="scanlines" min="0" max="100" value="45">
+                  <span class="effect-opacity-val" data-effect-val="scanlines">45%</span>
+                </div>
+              </div>
+
+              <!-- 15. Thermal -->
+              <div class="effect-item" id="effect-thermal" data-effect-key="thermal">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="thermal">
+                    <span class="effect-title">🌡️ Thermal / Night Vision</span>
+                  </label>
+                  <span class="effect-tag">Optics</span>
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="thermal" min="0" max="100" value="65">
+                  <span class="effect-opacity-val" data-effect-val="thermal">65%</span>
+                </div>
+              </div>
+
+              <!-- 16. Broadcast HUD -->
+              <div class="effect-item" id="effect-broadcast" data-effect-key="broadcast">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="broadcast">
+                    <span class="effect-title">📡 Live Broadcast HUD</span>
+                  </label>
+                  <input type="color" class="color-picker-swatch" data-effect-color="broadcast" value="#00f0ff" title="HUD Color">
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="broadcast" min="0" max="100" value="85">
+                  <span class="effect-opacity-val" data-effect-val="broadcast">85%</span>
+                </div>
+              </div>
+
+              <!-- 17. Vignette -->
+              <div class="effect-item" id="effect-vignette" data-effect-key="vignette">
+                <div class="effect-header">
+                  <label class="effect-title-wrap">
+                    <input type="checkbox" class="effect-checkbox" data-effect-check="vignette">
+                    <span class="effect-title">🎬 Cinematic Vignette</span>
+                  </label>
+                  <span class="effect-tag">Lens</span>
+                </div>
+                <div class="effect-slider-row">
+                  <label>Opacity</label>
+                  <input type="range" class="slider" data-effect-opacity="vignette" min="0" max="100" value="50">
+                  <span class="effect-opacity-val" data-effect-val="vignette">50%</span>
+                </div>
               </div>
             </div>
           </div>
@@ -620,10 +795,9 @@
           <div class="fx-section-card space-y-2.5">
             <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
               <i data-lucide="video" class="w-3.5 h-3.5 text-cyan-400"></i>
-              <span>Video Backdrop & Alpha</span>
+              <span>Backdrop Alpha</span>
             </h4>
-            <p class="text-[11px] text-slate-400">Configure background for compositing onto video timelines.</p>
-            <div class="grid grid-cols-3 gap-1.5 pt-1">
+            <div class="grid grid-cols-3 gap-1.5">
               <button id="backdrop-transparent" class="backdrop-btn">
                 <span>Alpha Grid</span>
                 <span class="subtext">Transparent</span>
@@ -644,7 +818,7 @@
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-orange-300 flex items-center gap-1.5">
                 <i data-lucide="film" class="w-3.5 h-3.5"></i>
-                <span>Export Video Clip</span>
+                <span>Export WebM Video</span>
               </span>
               <div class="flex items-center gap-1 text-[10px]">
                 <button data-duration="3" class="video-dur-btn active">3s</button>
@@ -652,9 +826,6 @@
                 <button data-duration="8" class="video-dur-btn">8s</button>
               </div>
             </div>
-            <p class="text-[11px] text-slate-400">
-              Captures live 60FPS animation with alpha channel transparency. Drop directly into Premiere, DaVinci, or CapCut.
-            </p>
 
             <button id="btn-record-video" class="btn-record-video">
               <i data-lucide="video" class="w-4 h-4"></i>
@@ -675,11 +846,11 @@
 
         </div>
 
-        <!-- TAB 5: MEDIA / PNG & GIF OVERLAYS -->
+        <!-- TAB 5: OVERLAYS STUDIO (PNG, GIF & MP4 VIDEO) -->
         <div data-tab-pane="media" class="space-y-4 hidden">
           <div>
-            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">Transparent PNG & Animated GIF Studio</h3>
-            <p class="text-xs text-slate-500 mb-2">Apply, scale, rotate, and layer transparent graphics and animated loops with zero watermarks.</p>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-1">OverLays Studio</h3>
+            <p class="text-xs text-slate-500 mb-2">Apply, scale, rotate, and layer transparent graphics, animated loops, and MP4 videos with zero watermarks.</p>
           </div>
 
           <!-- Upload Dropzone Card -->
@@ -687,11 +858,89 @@
             <div class="w-10 h-10 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-2">
               <i data-lucide="upload" class="w-5 h-5"></i>
             </div>
-            <span class="text-xs font-bold text-slate-200 block mb-0.5">Upload PNG or Animated GIF</span>
+            <span class="text-xs font-bold text-slate-200 block mb-0.5">Upload OverLay (PNG, GIF, or MP4)</span>
             <span class="text-[10px] text-slate-400 block mb-2">Drag & drop anywhere or click to browse</span>
             <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              .PNG • .GIF • .WEBP • .SVG
+              .PNG • .GIF • .MP4 • .WEBM • .WEBP
             </span>
+          </div>
+
+          <!-- MP3 Soundtrack & Audio Player -->
+          <div class="fx-section-card border-indigo-500/30 bg-indigo-950/20">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-[11px] font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+                <i data-lucide="music" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span>MP3 Soundtrack</span>
+              </h4>
+              <span id="audio-status-badge" class="text-[10px] px-2 py-0.5 rounded-full font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Ready</span>
+            </div>
+
+            <!-- Track Selector Dropdown -->
+            <div class="mb-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-[10px] uppercase font-bold text-slate-400">Track List (/public/mp3)</label>
+                <div class="flex items-center gap-2">
+                  <button id="btn-rescan-mp3" class="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer" title="Rescan /public/mp3 folder">
+                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                    <span>Rescan</span>
+                  </button>
+                  <button id="btn-open-mp3-folder" class="text-[10px] text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer" title="Open mp3 folder in file manager">
+                    <i data-lucide="folder" class="w-3 h-3"></i>
+                    <span>Folder</span>
+                  </button>
+                </div>
+              </div>
+              <select id="audio-track-selector" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500 cursor-pointer">
+                <option value="">Scanning /public/mp3...</option>
+              </select>
+            </div>
+
+            <!-- Upload Custom MP3 Button -->
+            <div class="flex items-center gap-2 mb-3">
+              <button id="btn-upload-mp3" class="btn btn-outline text-xs flex-1 py-1.5 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/15" title="Load your own MP3 sound file">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span>Load Custom MP3</span>
+              </button>
+              <input type="file" id="audio-mp3-file-input" accept="audio/mp3,audio/mpeg,audio/wav,audio/ogg" class="hidden" />
+            </div>
+
+            <!-- Player Bar -->
+            <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800/80">
+              <div class="flex items-center justify-between mb-1.5">
+                <span id="audio-track-title" class="text-xs font-bold text-slate-200 truncate max-w-[210px]">Deified</span>
+                <span id="audio-time-display" class="text-[10px] font-mono text-slate-400">0:00 / 0:00</span>
+              </div>
+
+              <!-- Seekable Progress Bar -->
+              <div id="audio-progress-container" class="w-full bg-slate-800 rounded-full h-1.5 cursor-pointer relative overflow-hidden mb-2.5">
+                <div id="audio-progress-bar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500 h-full w-0 transition-all duration-75"></div>
+              </div>
+
+              <!-- Controls Row -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <button id="btn-audio-prev" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all cursor-pointer" title="Previous Track">
+                    <i data-lucide="skip-back" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button id="btn-audio-play-pause" class="w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-all shadow-md shadow-indigo-600/30 cursor-pointer" title="Play / Pause">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                  </button>
+                  <button id="btn-audio-next" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all cursor-pointer" title="Next Track">
+                    <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button id="btn-audio-loop" class="px-2 py-1 rounded-md text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 transition-all cursor-pointer" title="Toggle Loop">
+                    LOOP ON
+                  </button>
+                </div>
+
+                <!-- Volume Slider -->
+                <div class="flex items-center gap-1.5">
+                  <i data-lucide="volume-2" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <input id="audio-volume-slider" type="range" min="0" max="100" value="80" class="slider w-16" title="Sound Volume" />
+                  <span id="audio-volume-val" class="text-[10px] font-mono text-slate-400 w-6 text-right">80%</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Built-In Animated Stickers -->
@@ -1088,6 +1337,10 @@
 
       <div class="flex items-center justify-between pt-3 border-t border-slate-800 mt-3">
         <div class="flex items-center gap-2">
+          <button id="btn-save-json-file" class="btn btn-outline text-xs text-amber-300 border-amber-500/30 hover:border-amber-500/50 flex items-center gap-1.5" title="Download JSON to file">
+            <i data-lucide="save" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Save JSON to Disk</span>
+          </button>
           <button id="btn-copy-json" class="btn btn-outline text-xs">
             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
             <span>Copy JSON</span>
